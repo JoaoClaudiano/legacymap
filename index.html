@@ -4,36 +4,34 @@
     <meta charset="UTF-8">
     <title>Legacy Map Pro</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reactflow@11.10.1/dist/style.css">
-
-    <script type="importmap">
-    {
-        "imports": {
-            "react": "https://esm.sh/react@18.2.0",
-            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-            "reactflow": "https://esm.sh/reactflow@11.10.1?external=react,react-dom"
-        }
-    }
-    </script>
-
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/reactflow@11.10.1/dist/react-flow.standalone.am.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/reactflow@11.10.1/dist/style.css">
+    
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
     <header class="main-header">
         <div class="logo">🗺️ LEGACY<span style="color: #3b82f6;">MAP</span></div>
-        <div class="version-tag">v2.2</div>
+        <div class="version-tag">v2.3 (Stable)</div>
     </header>
 
     <div id="app"></div>
 
     <footer class="main-footer">
-        Dica: Use URLs públicas do GitHub.
+        Conectado à API do GitHub • 2026
     </footer>
 
-    <script type="text/babel" data-type="module">
-        import React, { useState, useCallback } from 'react';
-        import { createRoot } from 'react-dom/client';
-        import ReactFlow, { Background, Controls } from 'reactflow';
+    <script type="text/babel">
+        // Pegamos as ferramentas diretamente do escopo global (window)
+        const { useState, useCallback, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        
+        // ReactFlow injeta tudo num objeto global chamado ReactFlow
+        const ReactFlowComponent = window.ReactFlow.default || window.ReactFlow;
+        const { Background, Controls } = window.ReactFlow;
 
         function App() {
             const [url, setUrl] = useState('');
@@ -81,9 +79,9 @@
                     }));
 
                     setNodes(newNodes);
-                    setStatus(`✅ Mapeado!`);
+                    setStatus(`✅ Sucesso!`);
                 } catch (err) {
-                    setStatus('❌ Erro no Repositório.');
+                    setStatus('❌ Erro de conexão.');
                 }
             };
 
@@ -92,23 +90,29 @@
                     <div id="ui-layer">
                         <div className="input-group">
                             <input 
-                                placeholder="Link do GitHub" 
+                                placeholder="https://github.com/usuario/projeto" 
                                 value={url} 
                                 onChange={e => setUrl(e.target.value)} 
                             />
-                            <button onClick={analyzeGithub}>MAPEAR</button>
+                            <button onClick={analyzeGithub}>GERAR MAPA</button>
                         </div>
                         <div className="status-box">Status: {status}</div>
                     </div>
 
-                    <ReactFlow nodes={nodes} edges={edges} onNodeClick={onNodeClick} fitView>
+                    <ReactFlowComponent 
+                        nodes={nodes} 
+                        edges={edges} 
+                        onNodeClick={onNodeClick} 
+                        fitView
+                    >
                         <Background color="#1e293b" gap={25} />
                         <Controls />
-                    </ReactFlow>
+                    </ReactFlowComponent>
                 </div>
             );
         }
 
+        // Renderização padrão React 18
         const container = document.getElementById('app');
         const root = createRoot(container);
         root.render(<App />);
