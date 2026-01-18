@@ -2,12 +2,14 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Legacy Map Pro</title>
     <link rel="stylesheet" href="style.css">
     
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/reactflow@11.10.1/dist/react-flow.standalone.am.js"></script>
+    <!-- Carregar React 18 de CDN confiável -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/reactflow@11.10.1/dist/umd/react-flow.production.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/reactflow@11.10.1/dist/style.css">
     
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -25,13 +27,12 @@
     </footer>
 
     <script type="text/babel">
-        // Pegamos as ferramentas diretamente do escopo global (window)
-        const { useState, useCallback, useEffect } = React;
+        const { useState, useCallback, useEffect, useRef } = React;
         const { createRoot } = ReactDOM;
         
-        // ReactFlow injeta tudo num objeto global chamado ReactFlow
-        const ReactFlowComponent = window.ReactFlow.default || window.ReactFlow;
-        const { Background, Controls } = window.ReactFlow;
+        // Obter ReactFlow do objeto global
+        const ReactFlowComponent = window.ReactFlow?.default || window.ReactFlow?.ReactFlow;
+        const { Background, Controls, MiniMap } = window.ReactFlow || {};
 
         function App() {
             const [url, setUrl] = useState('');
@@ -39,83 +40,365 @@
             const [edges, setEdges] = useState([]);
             const [status, setStatus] = useState('Pronto');
             const [repoBase, setRepoBase] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const reactFlowWrapper = useRef(null);
 
             const getFileColor = (path) => {
-                if (path.endsWith('.ts')) return '#1e40af';
-                if (path.endsWith('.tsx')) return '#1d4ed8';
-                if (path.endsWith('.jsx')) return '#06b6d4';
-                return '#3b82f6';
+                const colorMap = {
+                    '.ts': '#1e40af',
+                    '.tsx': '#1d4ed8',
+                    '.jsx': '#06b6d4',
+                    '.js': '#3b82f6',
+                    '.css': '#8b5cf6',
+                    '.scss': '#7c3aed',
+                    '.json': '#f59e0b',
+                    '.md': '#10b981',
+                    '.html': '#ef4444',
+                    '.py': '#3b82f6',
+                    '.java': '#dc2626',
+                    '.cpp': '#059669',
+                    '.cs': '#4f46e5'
+                };
+                
+                for (const [ext, color] of Object.entries(colorMap)) {
+                    if (path.endsWith(ext)) return color;
+                }
+                return '#6b7280';
+            };
+
+            const getFileIcon = (path) => {
+                if (path.endsWith('.ts') || path.endsWith('.tsx')) return 'TS';
+                if (path.endsWith('.js') || path.endsWith('.jsx')) return 'JS';
+                if (path.endsWith('.css')) return 'CSS';
+                if (path.endsWith('.html')) return 'HTML';
+                if (path.endsWith('.json')) return 'JSON';
+                if (path.endsWith('.md')) return 'MD';
+                return 'FILE';
             };
 
             const onNodeClick = useCallback((event, node) => {
-                if (repoBase) window.open(`${repoBase}/blob/main/${node.id}`, '_blank');
+                if (repoBase) {
+                    window.open(`${repoBase}/blob/main/${node.id}`, '_blank');
+                }
             }, [repoBase]);
 
             const analyzeGithub = async () => {
-                setStatus('🔍 Conectando...');
+                if (!url) {
+                    setError('Por favor, insira uma URL do GitHub');
+                    return;
+                }
+
+                const match = url.match(/github\.com\/([^/]+)\/([^/]+)/);
+                if (!match) {
+                    setError('URL do GitHub inválida. Formato esperado: https://github.com/usuario/repositorio');
+                    return;
+                }
+
+                setLoading(true);
+                setStatus('🔍 Conectando ao GitHub...');
+                setError(null);
+
                 try {
-                    const match = url.match(/github\.com\/([^/]+)\/([^/]+)/);
-                    if (!match) return alert("URL inválida.");
                     const [_, owner, repo] = match;
+                    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`;
+                    
+                    const res = await fetch(apiUrl, {
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+
+                    if (!res.ok) {
+                        if (res.status === 404) {
+                            throw new Error('Repositório não encontrado. Verifique se o nome está correto.');
+                        } else if (res.status === 403) {
+                            throw new Error('Limite de requisições excedido. Tente novamente mais tarde.');
+                        }
+                        throw new Error(`Erro ${res.status}: ${res.statusText}`);
+                    }
+
+                    const data = await res.json();
+                    
+                    if (!data.tree) {
+                        throw new Error('Estrutura do repositório não encontrada');
+                    }
+
+                    const files = data.tree
+                        .filter(f => f.type === 'blob' && f.path.match(/\.(js|ts|jsx|tsx|css|scss|json|md|html|py|java|cpp|cs)$/))
+                        .filter(f => !f.path.includes('node_modules') && !f.path.includes('dist') && !f.path.includes('build'))
+                        .slice(0, 100); // Aumentado para 100 arquivos
+
+                    if (files.length === 0) {
+                        setError('Nenhum arquivo de código encontrado no repositório');
+                        setNodes([]);
+                        setStatus('⚠️ Nenhum arquivo encontrado');
+                        return;
+                    }
+
                     setRepoBase(`https://github.com/${owner}/${repo}`);
 
-                    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`).then(r => r.json());
-                    if (!res.tree) throw new Error();
+                    // Criar layout em grid mais organizado
+                    const columns = Math.min(Math.ceil(Math.sqrt(files.length)), 8);
+                    const nodeWidth = 160;
+                    const nodeHeight = 100;
+                    const horizontalSpacing = 200;
+                    const verticalSpacing = 140;
 
-                    const files = res.tree
-                        .filter(f => f.path.match(/\.(js|ts|jsx|tsx|css)$/) && !f.path.includes('node_modules'))
-                        .slice(0, 40);
+                    const newNodes = files.map((f, i) => {
+                        const column = i % columns;
+                        const row = Math.floor(i / columns);
+                        
+                        return {
+                            id: f.path,
+                            data: { 
+                                label: f.path.split('/').pop(),
+                                fullPath: f.path,
+                                icon: getFileIcon(f.path),
+                                lines: Math.min(Math.floor(Math.random() * 1000) + 50, 2000) // Exemplo de métrica
+                            },
+                            position: { 
+                                x: column * horizontalSpacing + 50, 
+                                y: row * verticalSpacing + 50 
+                            },
+                            style: { 
+                                background: getFileColor(f.path), 
+                                color: '#fff', 
+                                borderRadius: '8px', 
+                                padding: '12px', 
+                                width: nodeWidth, 
+                                fontSize: '12px', 
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                border: '2px solid rgba(255,255,255,0.1)',
+                                boxShadow: '0 6px 12px rgba(0,0,0,0.3)',
+                                transition: 'all 0.2s ease'
+                            },
+                            className: 'file-node'
+                        };
+                    });
+
+                    // Criar conexões baseadas na estrutura de pastas
+                    const newEdges = [];
+                    const pathMap = {};
                     
-                    const newNodes = files.map((f, i) => ({
-                        id: f.path,
-                        data: { label: f.path.split('/').pop() },
-                        position: { x: (i % 6) * 180, y: Math.floor(i / 6) * 120 },
-                        style: { 
-                            background: getFileColor(f.path), color: '#fff', 
-                            borderRadius: '6px', padding: '10px', width: 140, 
-                            fontSize: '11px', textAlign: 'center', cursor: 'pointer',
-                            border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                    files.forEach(f => {
+                        const parts = f.path.split('/');
+                        if (parts.length > 1) {
+                            const parent = parts.slice(0, -1).join('/');
+                            if (pathMap[parent]) {
+                                newEdges.push({
+                                    id: `e-${parent}-${f.path}`,
+                                    source: parent,
+                                    target: f.path,
+                                    type: 'smoothstep',
+                                    animated: false,
+                                    style: { stroke: '#475569', strokeWidth: 1.5 }
+                                });
+                            }
                         }
-                    }));
+                        pathMap[f.path] = true;
+                    });
 
                     setNodes(newNodes);
-                    setStatus(`✅ Sucesso!`);
+                    setEdges(newEdges);
+                    setStatus(`✅ ${files.length} arquivos mapeados com sucesso!`);
+                    
                 } catch (err) {
-                    setStatus('❌ Erro de conexão.');
+                    console.error('Erro:', err);
+                    setError(err.message);
+                    setStatus('❌ Erro na conexão');
+                    setNodes([]);
+                    setEdges([]);
+                } finally {
+                    setLoading(false);
                 }
             };
 
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter' && !loading) {
+                    analyzeGithub();
+                }
+            };
+
+            // Efeito de hover nos nós
+            useEffect(() => {
+                const handleMouseEnter = (e) => {
+                    if (e.target.closest('.file-node')) {
+                        e.target.style.transform = 'translateY(-4px)';
+                        e.target.style.boxShadow = '0 10px 20px rgba(0,0,0,0.4)';
+                    }
+                };
+                
+                const handleMouseLeave = (e) => {
+                    if (e.target.closest('.file-node')) {
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
+                    }
+                };
+
+                document.addEventListener('mouseenter', handleMouseEnter, true);
+                document.addEventListener('mouseleave', handleMouseLeave, true);
+
+                return () => {
+                    document.removeEventListener('mouseenter', handleMouseEnter, true);
+                    document.removeEventListener('mouseleave', handleMouseLeave, true);
+                };
+            }, []);
+
             return (
-                <div style={{ width: '100vw', height: 'calc(100vh - 95px)' }}>
-                    <div id="ui-layer">
-                        <div className="input-group">
+                <div style={{ width: '100vw', height: 'calc(100vh - 95px)' }} ref={reactFlowWrapper}>
+                    <div id="ui-layer" style={{
+                        position: 'absolute',
+                        top: '20px',
+                        left: '20px',
+                        zIndex: 10,
+                        background: 'rgba(15, 23, 42, 0.9)',
+                        padding: '20px',
+                        borderRadius: '10px',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        minWidth: '350px'
+                    }}>
+                        <div style={{ marginBottom: '15px' }}>
+                            <h3 style={{ margin: '0 0 10px 0', color: '#f8fafc' }}>GitHub Repository Mapper</h3>
+                            <p style={{ fontSize: '12px', color: '#94a3b8', margin: '0' }}>
+                                Insira a URL de um repositório GitHub para visualizar sua estrutura
+                            </p>
+                        </div>
+                        
+                        <div className="input-group" style={{ display: 'flex', gap: '10px' }}>
                             <input 
                                 placeholder="https://github.com/usuario/projeto" 
                                 value={url} 
-                                onChange={e => setUrl(e.target.value)} 
+                                onChange={e => setUrl(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                disabled={loading}
+                                style={{
+                                    flex: 1,
+                                    padding: '12px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #475569',
+                                    background: '#0f172a',
+                                    color: '#f8fafc',
+                                    fontSize: '14px'
+                                }}
                             />
-                            <button onClick={analyzeGithub}>GERAR MAPA</button>
+                            <button 
+                                onClick={analyzeGithub}
+                                disabled={loading}
+                                style={{
+                                    padding: '12px 24px',
+                                    background: loading ? '#475569' : '#3b82f6',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: loading ? 'not-allowed' : 'pointer',
+                                    fontWeight: 'bold',
+                                    transition: 'background 0.2s'
+                                }}
+                            >
+                                {loading ? 'PROCESSANDO...' : 'GERAR MAPA'}
+                            </button>
                         </div>
-                        <div className="status-box">Status: {status}</div>
+                        
+                        <div className="status-box" style={{
+                            marginTop: '15px',
+                            padding: '12px',
+                            background: error ? '#fef2f2' : '#f0f9ff',
+                            border: `1px solid ${error ? '#fecaca' : '#bae6fd'}`,
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            color: error ? '#991b1b' : '#0369a1'
+                        }}>
+                            <strong>Status:</strong> {status}
+                            {error && (
+                                <div style={{ marginTop: '8px', fontSize: '13px' }}>
+                                    {error}
+                                </div>
+                            )}
+                        </div>
+                        
+                        {nodes.length > 0 && (
+                            <div style={{
+                                marginTop: '15px',
+                                padding: '10px',
+                                background: 'rgba(30, 41, 59, 0.8)',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                color: '#cbd5e1'
+                            }}>
+                                <strong>Dica:</strong> Clique em qualquer arquivo para abrir no GitHub
+                                <div style={{ marginTop: '5px' }}>
+                                    {nodes.length} arquivos • {edges.length} conexões
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    <ReactFlowComponent 
-                        nodes={nodes} 
-                        edges={edges} 
-                        onNodeClick={onNodeClick} 
-                        fitView
-                    >
-                        <Background color="#1e293b" gap={25} />
-                        <Controls />
-                    </ReactFlowComponent>
+                    {ReactFlowComponent ? (
+                        <ReactFlowComponent 
+                            nodes={nodes} 
+                            edges={edges} 
+                            onNodeClick={onNodeClick}
+                            fitView
+                            fitViewOptions={{ padding: 0.2 }}
+                            nodesDraggable={true}
+                            nodesConnectable={false}
+                            zoomOnScroll={true}
+                            panOnScroll={true}
+                            style={{ background: '#0f172a' }}
+                        >
+                            <Background color="#1e293b" gap={30} size={1} />
+                            <Controls 
+                                style={{
+                                    background: 'rgba(15, 23, 42, 0.9)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '6px'
+                                }}
+                            />
+                            {MiniMap && (
+                                <MiniMap 
+                                    style={{
+                                        background: 'rgba(15, 23, 42, 0.9)',
+                                        border: '1px solid rgba(255,255,255,0.1)'
+                                    }}
+                                    nodeColor={(node) => getFileColor(node.id)}
+                                />
+                            )}
+                        </ReactFlowComponent>
+                    ) : (
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            height: '100%',
+                            color: '#94a3b8'
+                        }}>
+                            Erro ao carregar ReactFlow. Verifique a conexão com a internet.
+                        </div>
+                    )}
                 </div>
             );
         }
 
-        // Renderização padrão React 18
+        // Renderização com tratamento de erro
         const container = document.getElementById('app');
-        const root = createRoot(container);
-        root.render(<App />);
+        if (container) {
+            try {
+                const root = createRoot(container);
+                root.render(<App />);
+            } catch (error) {
+                console.error('Erro ao renderizar aplicação:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #dc2626;">
+                        <h3>Erro ao carregar a aplicação</h3>
+                        <p>${error.message}</p>
+                        <p>Recarregue a página ou verifique o console para mais detalhes.</p>
+                    </div>
+                `;
+            }
+        }
     </script>
 </body>
 </html>
