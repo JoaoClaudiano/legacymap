@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Legacy Map Pro - Recursive Edition</title>
+    <title>Legacy Map Pro - Stable Edition</title>
     <style>
         body, html, #app { margin: 0; width: 100%; height: 100%; background: #0f172a; color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
         #ui-layer { position: absolute; top: 20px; left: 20px; z-index: 10; background: rgba(30, 41, 59, 0.95); padding: 20px; border-radius: 12px; border: 1px solid #334155; backdrop-filter: blur(8px); width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
@@ -12,9 +12,11 @@
         .stats { font-size: 12px; color: #94a3b8; border-top: 1px solid #334155; padding-top: 10px; margin-top: 10px; line-height: 1.6; }
         .badge { background: #1e293b; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
     </style>
+    
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <script src="https://unpkg.com/reactflow@11.10.1/dist/react-flow.standalone.am.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/reactflow@11.10.1/dist/style.css">
 </head>
@@ -22,9 +24,10 @@
     <div id="app"></div>
 
     <script type="text/babel">
-        const { useState, useCallback } = React;
-        const ReactFlow = window.ReactFlow.default;
+        // Correção crítica: Acessando o objeto global de forma segura
+        const ReactFlowInstance = window.ReactFlow.default || window.ReactFlow;
         const { Background, Controls, MarkerType } = window.ReactFlow;
+        const { useState } = React;
 
         function App() {
             const [nodes, setNodes] = useState([]);
@@ -32,7 +35,6 @@
             const [githubUrl, setGithubUrl] = useState('');
             const [status, setStatus] = useState('Pronto para escanear');
 
-            // Função para gerar uma cor baseada no caminho da pasta (para agrupar visualmente)
             const getFolderColor = (path) => {
                 const folder = path.split('/')[0] || 'root';
                 let hash = 0;
@@ -46,22 +48,19 @@
                 const newNodes = files.map((f) => ({
                     id: f.id,
                     data: { label: f.label },
-                    position: { x: Math.random() * 1000, y: Math.random() * 800 },
+                    position: { x: Math.random() * 800, y: Math.random() * 600 },
                     style: { 
                         background: getFolderColor(f.id), 
                         color: 'white', 
                         fontSize: '10px',
                         width: 120,
-                        textAlign: 'center',
                         borderRadius: '6px',
                         border: '1px solid rgba(255,255,255,0.2)'
                     }
                 }));
 
                 const newEdges = relations.map((rel, i) => {
-                    // Tenta encontrar o alvo exato ou um arquivo que termine com o nome importado
                     const targetNode = files.find(f => f.id === rel.target || f.id.endsWith(rel.target + '.js') || f.id.endsWith(rel.target + '.ts'));
-                    
                     return {
                         id: `e-${i}`,
                         source: rel.source,
@@ -70,7 +69,7 @@
                         markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
                         style: { stroke: '#475569' }
                     };
-                }).filter(e => files.some(f => f.id === e.target)); // Remove links para arquivos não mapeados
+                }).filter(e => files.some(f => f.id === e.target));
 
                 setNodes(newNodes);
                 setEdges(newEdges);
@@ -83,24 +82,22 @@
                     if (!match) return alert("Cole uma URL válida do GitHub");
 
                     const [_, owner, repo] = match;
-                    // 1. Pega o SHA da branch principal (default)
                     const repoInfo = await fetch(`https://api.github.com/repos/${owner}/${repo}`).then(r => r.json());
                     const branch = repoInfo.default_branch;
 
-                    // 2. Busca árvore recursiva
                     const treeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`).then(r => r.json());
                     
                     const sourceFiles = treeRes.tree.filter(item => 
                         (item.path.endsWith('.js') || item.path.endsWith('.ts')) && !item.path.includes('node_modules')
                     );
 
-                    setStatus(`Lendo ${sourceFiles.length} arquivos (isso pode demorar)...`);
+                    setStatus(`Lendo ${Math.min(sourceFiles.length, 30)} arquivos...`);
                     
                     const files = [];
                     const relations = [];
 
-                    // 3. Processa arquivos (limitado para não estourar a API rapidamente)
-                    for (const item of sourceFiles.slice(0, 50)) { // Limitamos a 50 arquivos no MVP para segurança
+                    // Pegamos os primeiros 30 para evitar travar o navegador no MVP
+                    for (const item of sourceFiles.slice(0, 30)) {
                         const fileRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${item.path}`);
                         const text = await fileRes.text();
                         
@@ -116,67 +113,62 @@
                     buildGraph(files, relations);
                     setStatus('Análise completa!');
                 } catch (err) {
-                    console.error(err);
-                    setStatus('Erro ao acessar API do GitHub.');
+                    setStatus('Erro ao acessar GitHub.');
                 }
             };
 
             const analyzeFolder = async () => {
-                const dirHandle = await window.showDirectoryPicker();
-                setStatus('Escaneando pastas locais...');
-                const files = [];
-                const relations = [];
+                try {
+                    const dirHandle = await window.showDirectoryPicker();
+                    setStatus('Escaneando local...');
+                    const files = [];
+                    const relations = [];
 
-                async function scan(handle, path = "") {
-                    for await (const entry of handle.values()) {
-                        const fullPath = path ? `${path}/${entry.name}` : entry.name;
-                        if (entry.kind === 'directory' && entry.name !== 'node_modules') {
-                            await scan(entry, fullPath);
-                        } else if (entry.name.endsWith('.js') || entry.name.endsWith('.ts')) {
-                            const file = await entry.getFile();
-                            const content = await file.text();
-                            files.push({ id: fullPath, label: entry.name });
-                            const importRegex = /from\s+['"]([^'"]+)['"]/g;
-                            let m;
-                            while ((m = importRegex.exec(content)) !== null) {
-                                relations.push({ source: fullPath, target: m[1].replace(/^\.\//, '') });
+                    async function scan(handle, path = "") {
+                        for await (const entry of handle.values()) {
+                            const fullPath = path ? `${path}/${entry.name}` : entry.name;
+                            if (entry.kind === 'directory' && entry.name !== 'node_modules') {
+                                await scan(entry, fullPath);
+                            } else if (entry.name.endsWith('.js') || entry.name.endsWith('.ts')) {
+                                const file = await entry.getFile();
+                                const content = await file.text();
+                                files.push({ id: fullPath, label: entry.name });
+                                const importRegex = /from\s+['"]([^'"]+)['"]/g;
+                                let m;
+                                while ((m = importRegex.exec(content)) !== null) {
+                                    relations.push({ source: fullPath, target: m[1].replace(/^\.\//, '') });
+                                }
                             }
                         }
                     }
-                }
-                await scan(dirHandle);
-                buildGraph(files, relations);
-                setStatus('Mapa local gerado!');
+                    await scan(dirHandle);
+                    buildGraph(files, relations);
+                    setStatus('Mapa local gerado!');
+                } catch (e) { setStatus('Permissão negada'); }
             };
 
             return (
                 <div style={{ width: '100vw', height: '100vh' }}>
                     <div id="ui-layer">
-                        <h2 style={{marginTop: 0, fontSize: '20px'}}>🗺️ Legacy Map Pro</h2>
-                        
-                        <label style={{fontSize: '11px', color: '#94a3b8', fontWeight: 'bold'}}>GITHUB REPO (RECURSIVO)</label>
+                        <h2 style={{marginTop: 0, fontSize: '20px'}}>🗺️ Legacy Map</h2>
                         <input 
-                            placeholder="https://github.com/usuario/projeto" 
+                            placeholder="Link do GitHub" 
                             value={githubUrl}
                             onChange={(e) => setGithubUrl(e.target.value)}
                         />
-                        <button onClick={analyzeGithub}>Mapear Repositório</button>
-                        
-                        <div style={{textAlign: 'center', margin: '5px 0', fontSize: '11px', color: '#475569'}}>OU</div>
-                        
-                        <button className="secondary-btn" onClick={analyzeFolder}>Abrir Pasta Local</button>
-                        
+                        <button onClick={analyzeGithub}>Mapear GitHub</button>
+                        <button className="secondary-btn" onClick={analyzeFolder}>Mapear Pasta Local</button>
                         <div className="stats">
-                            <div><strong>Status:</strong> <span style={{color: '#fbbf24'}}>{status}</span></div>
-                            <div><strong>Arquivos mapeados:</strong> <span className="badge">{nodes.length}</span></div>
-                            <div style={{marginTop: '5px', fontSize: '10px'}}>Dica: Use o scroll para zoom e arraste os arquivos.</div>
+                            <strong>Status:</strong> {status}<br/>
+                            <strong>Arquivos:</strong> <span className="badge">{nodes.length}</span>
                         </div>
                     </div>
                     
-                    <ReactFlow nodes={nodes} edges={edges} fitView>
+                    {/* Mudança aqui: Usando a instância correta carregada do CDN */}
+                    <ReactFlowInstance nodes={nodes} edges={edges} fitView>
                         <Background color="#1e293b" gap={20} />
                         <Controls />
-                    </ReactFlow>
+                    </ReactFlowInstance>
                 </div>
             );
         }
