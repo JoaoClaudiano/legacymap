@@ -1,106 +1,95 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <title>Legacy Map Pro - Stable Edition</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legacy Map Pro</title>
     <style>
-        body, html, #app { margin: 0; width: 100%; height: 100%; background: #0f172a; color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
+        body, html, #app { margin: 0; width: 100%; height: 100%; background: #0f172a; color: white; font-family: sans-serif; overflow: hidden; }
         #ui-layer { position: absolute; top: 20px; left: 20px; z-index: 10; background: rgba(30, 41, 59, 0.95); padding: 20px; border-radius: 12px; border: 1px solid #334155; backdrop-filter: blur(8px); width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #1e293b; color: white; margin-bottom: 10px; box-sizing: border-box; }
+        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #1e293b; color: white; margin-bottom: 10px; box-sizing: border-box; display: block; }
         button { background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-bottom: 10px; transition: 0.2s; }
-        button:hover { background: #2563eb; opacity: 0.9; }
-        .secondary-btn { background: #475569; }
-        .stats { font-size: 12px; color: #94a3b8; border-top: 1px solid #334155; padding-top: 10px; margin-top: 10px; line-height: 1.6; }
-        .badge { background: #1e293b; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        button:hover { background: #2563eb; }
+        .stats { font-size: 12px; color: #94a3b8; border-top: 1px solid #334155; padding-top: 10px; margin-top: 10px; }
+        .loading { display: flex; justify-content: center; align-items: center; height: 100vh; background: #0f172a; color: #3b82f6; font-weight: bold; }
     </style>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <script src="https://unpkg.com/reactflow@11.10.1/dist/react-flow.standalone.am.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/reactflow@11.10.1/dist/style.css">
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
-    <div id="app"></div>
+    <div id="app">
+        <div class="loading">Iniciando Legacy Map...</div>
+    </div>
 
     <script type="text/babel">
-        // Correção crítica: Acessando o objeto global de forma segura
-        const ReactFlowInstance = window.ReactFlow.default || window.ReactFlow;
-        const { Background, Controls, MarkerType } = window.ReactFlow;
-        const { useState } = React;
+        // 1. Função segura para extrair componentes do ReactFlow global
+        const getRF = () => {
+            const rf = window.ReactFlow;
+            if (!rf) return null;
+            // Verifica se as propriedades estão no nível raiz ou dentro de .default
+            return {
+                Component: rf.ReactFlow || rf.default || rf,
+                Background: rf.Background,
+                Controls: rf.Controls,
+                MarkerType: rf.MarkerType
+            };
+        };
+
+        const { useState, useEffect } = React;
 
         function App() {
+            const [rfComponents, setRfComponents] = useState(null);
             const [nodes, setNodes] = useState([]);
             const [edges, setEdges] = useState([]);
             const [githubUrl, setGithubUrl] = useState('');
-            const [status, setStatus] = useState('Pronto para escanear');
+            const [status, setStatus] = useState('Pronto');
 
-            const getFolderColor = (path) => {
-                const folder = path.split('/')[0] || 'root';
-                let hash = 0;
-                for (let i = 0; i < folder.length; i++) {
-                    hash = folder.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                return `hsl(${Math.abs(hash % 360)}, 60%, 45%)`;
-            };
-
-            const buildGraph = (files, relations) => {
-                const newNodes = files.map((f) => ({
-                    id: f.id,
-                    data: { label: f.label },
-                    position: { x: Math.random() * 800, y: Math.random() * 600 },
-                    style: { 
-                        background: getFolderColor(f.id), 
-                        color: 'white', 
-                        fontSize: '10px',
-                        width: 120,
-                        borderRadius: '6px',
-                        border: '1px solid rgba(255,255,255,0.2)'
+            // 2. Aguarda o ReactFlow estar disponível no objeto window
+            useEffect(() => {
+                const checkRF = setInterval(() => {
+                    const found = getRF();
+                    if (found && found.Component) {
+                        setRfComponents(found);
+                        clearInterval(checkRF);
                     }
-                }));
+                }, 100);
+                return () => clearInterval(checkRF);
+            }, []);
 
-                const newEdges = relations.map((rel, i) => {
-                    const targetNode = files.find(f => f.id === rel.target || f.id.endsWith(rel.target + '.js') || f.id.endsWith(rel.target + '.ts'));
-                    return {
-                        id: `e-${i}`,
-                        source: rel.source,
-                        target: targetNode ? targetNode.id : rel.target,
-                        animated: true,
-                        markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
-                        style: { stroke: '#475569' }
-                    };
-                }).filter(e => files.some(f => f.id === e.target));
+            if (!rfComponents) return <div class="loading">Carregando bibliotecas...</div>;
 
-                setNodes(newNodes);
-                setEdges(newEdges);
-            };
+            const { Component: ReactFlow, Background, Controls, MarkerType } = rfComponents;
 
             const analyzeGithub = async () => {
+                setStatus('Buscando repositório...');
                 try {
-                    setStatus('Buscando estrutura do repo...');
                     const match = githubUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
-                    if (!match) return alert("Cole uma URL válida do GitHub");
-
+                    if (!match) return alert("URL Inválida. Use: https://github.com/usuario/repo");
+                    
                     const [_, owner, repo] = match;
                     const repoInfo = await fetch(`https://api.github.com/repos/${owner}/${repo}`).then(r => r.json());
                     const branch = repoInfo.default_branch;
-
                     const treeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`).then(r => r.json());
                     
                     const sourceFiles = treeRes.tree.filter(item => 
                         (item.path.endsWith('.js') || item.path.endsWith('.ts')) && !item.path.includes('node_modules')
                     );
 
-                    setStatus(`Lendo ${Math.min(sourceFiles.length, 30)} arquivos...`);
+                    setStatus(`Lendo ${Math.min(sourceFiles.length, 20)} arquivos...`);
                     
                     const files = [];
                     const relations = [];
 
-                    // Pegamos os primeiros 30 para evitar travar o navegador no MVP
-                    for (const item of sourceFiles.slice(0, 30)) {
+                    // Loop limitado para não estourar limite da API rapidamente
+                    for (const item of sourceFiles.slice(0, 20)) {
                         const fileRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${item.path}`);
                         const text = await fileRes.text();
-                        
                         files.push({ id: item.path, label: item.path.split('/').pop() });
 
                         const importRegex = /from\s+['"]([^'"]+)['"]/g;
@@ -110,65 +99,48 @@
                         }
                     }
 
-                    buildGraph(files, relations);
+                    setNodes(files.map(f => ({
+                        id: f.id,
+                        data: { label: f.label },
+                        position: { x: Math.random() * 500, y: Math.random() * 500 },
+                        style: { background: '#3b82f6', color: '#fff', borderRadius: '8px', padding: '10px', width: 120 }
+                    })));
+
+                    setEdges(relations.map((rel, i) => ({
+                        id: `e-${i}`,
+                        source: rel.source,
+                        target: files.find(f => f.id.endsWith(rel.target))?.id || rel.target,
+                        animated: true,
+                        markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' }
+                    })).filter(e => files.some(f => f.id === e.target)));
+
                     setStatus('Análise completa!');
                 } catch (err) {
-                    setStatus('Erro ao acessar GitHub.');
+                    console.error(err);
+                    setStatus('Erro na conexão.');
                 }
             };
 
-            const analyzeFolder = async () => {
-                try {
-                    const dirHandle = await window.showDirectoryPicker();
-                    setStatus('Escaneando local...');
-                    const files = [];
-                    const relations = [];
-
-                    async function scan(handle, path = "") {
-                        for await (const entry of handle.values()) {
-                            const fullPath = path ? `${path}/${entry.name}` : entry.name;
-                            if (entry.kind === 'directory' && entry.name !== 'node_modules') {
-                                await scan(entry, fullPath);
-                            } else if (entry.name.endsWith('.js') || entry.name.endsWith('.ts')) {
-                                const file = await entry.getFile();
-                                const content = await file.text();
-                                files.push({ id: fullPath, label: entry.name });
-                                const importRegex = /from\s+['"]([^'"]+)['"]/g;
-                                let m;
-                                while ((m = importRegex.exec(content)) !== null) {
-                                    relations.push({ source: fullPath, target: m[1].replace(/^\.\//, '') });
-                                }
-                            }
-                        }
-                    }
-                    await scan(dirHandle);
-                    buildGraph(files, relations);
-                    setStatus('Mapa local gerado!');
-                } catch (e) { setStatus('Permissão negada'); }
-            };
-
             return (
-                <div style={{ width: '100vw', height: '100vh' }}>
+                <div style={{ width: '100%', height: '100%' }}>
                     <div id="ui-layer">
-                        <h2 style={{marginTop: 0, fontSize: '20px'}}>🗺️ Legacy Map</h2>
+                        <h2 style={{marginTop: 0}}>🗺️ Legacy Map</h2>
                         <input 
-                            placeholder="Link do GitHub" 
+                            placeholder="Link do GitHub (ex: https://github.com/facebook/react)" 
                             value={githubUrl}
                             onChange={(e) => setGithubUrl(e.target.value)}
                         />
-                        <button onClick={analyzeGithub}>Mapear GitHub</button>
-                        <button className="secondary-btn" onClick={analyzeFolder}>Mapear Pasta Local</button>
+                        <button onClick={analyzeGithub}>Mapear Repositório</button>
                         <div className="stats">
                             <strong>Status:</strong> {status}<br/>
-                            <strong>Arquivos:</strong> <span className="badge">{nodes.length}</span>
+                            <strong>Arquivos:</strong> {nodes.length}
                         </div>
                     </div>
                     
-                    {/* Mudança aqui: Usando a instância correta carregada do CDN */}
-                    <ReactFlowInstance nodes={nodes} edges={edges} fitView>
+                    <ReactFlow nodes={nodes} edges={edges} fitView>
                         <Background color="#1e293b" gap={20} />
                         <Controls />
-                    </ReactFlowInstance>
+                    </ReactFlow>
                 </div>
             );
         }
