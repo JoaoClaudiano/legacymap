@@ -1,9 +1,0 @@
-{
-  "name": "legacy-map-tool",
-  "version": "1.0.0",
-  "description": "Visualizador de dependências para código legado",
-  "main": "scanner.js",
-  "dependencies": {
-    "dependency-cruiser": "^16.0.0"
-  }
-}
