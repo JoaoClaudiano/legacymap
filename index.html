@@ -1,56 +1,160 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Legacy Map Viewer</title>
-  <style>
-    body, html, #app { margin: 0; width: 100%; height: 100%; background: #121212; color: white; font-family: sans-serif; }
-    #header { position: absolute; top: 10px; left: 10px; z-index: 5; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; }
-  </style>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/reactflow@11.10.1/dist/react-flow.standalone.am.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/reactflow@11.10.1/dist/style.css">
+    <title>Legacy Map Pro</title>
+    <style>
+        body, html, #app { margin: 0; width: 100%; height: 100%; background: #0f172a; color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
+        #ui-layer { position: absolute; top: 20px; left: 20px; z-index: 10; background: rgba(30, 41, 59, 0.95); padding: 20px; border-radius: 12px; border: 1px solid #334155; backdrop-filter: blur(8px); width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #1e293b; color: white; margin-bottom: 10px; box-sizing: border-box; }
+        button { background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-bottom: 10px; transition: 0.2s; }
+        button:hover { background: #2563eb; }
+        .secondary-btn { background: #475569; }
+        .stats { font-size: 12px; color: #94a3b8; border-top: 1px solid #334155; pt: 10px; margin-top: 10px; }
+        .loading-bar { height: 4px; background: #3b82f6; position: fixed; top: 0; left: 0; transition: width 0.3s; z-index: 100; }
+    </style>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/reactflow@11.10.1/dist/react-flow.standalone.am.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/reactflow@11.10.1/dist/style.css">
 </head>
 <body>
-  <div id="header">
-    <strong>Legacy Map MVP</strong><br>
-    <small>Visualizando dependências do projeto</small>
-  </div>
-  <div id="app"></div>
+    <div id="app"></div>
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
-    const ReactFlow = window.ReactFlow.default;
-    const { Background, Controls } = window.ReactFlow;
+    <script type="text/babel">
+        const { useState } = React;
+        const ReactFlow = window.ReactFlow.default;
+        const { Background, Controls, MarkerType } = window.ReactFlow;
 
-    function Map() {
-      const [nodes, setNodes] = useState([]);
-      const [edges, setEdges] = useState([]);
+        function App() {
+            const [nodes, setNodes] = useState([]);
+            const [edges, setEdges] = useState([]);
+            const [githubUrl, setGithubUrl] = useState('');
+            const [status, setStatus] = useState('Aguardando entrada...');
 
-      useEffect(() => {
-        // Carrega o JSON gerado pelo scanner
-        fetch('./data.json')
-          .then(res => res.json())
-          .then(data => {
-            setNodes(data.nodes);
-            setEdges(data.edges);
-          })
-          .catch(err => console.error("Erro ao carregar data.json. Rode o scanner primeiro!", err));
-      }, []);
+            // --- LÓGICA PARA GITHUB (OPÇÃO A) ---
+            const analyzeGithub = async () => {
+                try {
+                    setStatus('Conectando ao GitHub...');
+                    // Regex para extrair dono, repo e path
+                    const match = githubUrl.match(/github\.com\/([^/]+)\/([^/]+)(?:\/tree\/([^/]+)\/(.+))?/);
+                    if (!match) return alert("URL do GitHub inválida!");
 
-      return (
-        <div style={{ width: '100%', height: '100%' }}>
-          <ReactFlow nodes={nodes} edges={edges} fitView>
-            <Background color="#333" gap={20} />
-            <Controls />
-          </ReactFlow>
-        </div>
-      );
-    }
+                    const [_, owner, repo, branch = 'main', path = ''] = match;
+                    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
+                    
+                    const response = await fetch(apiUrl);
+                    const contents = await response.json();
+                    
+                    if (!Array.isArray(contents)) throw new Error("Não foi possível ler a pasta.");
 
-    const root = ReactDOM.createRoot(document.getElementById('app'));
-    root.render(<Map />);
-  </script>
+                    const files = [];
+                    const relations = [];
+
+                    for (const item of contents) {
+                        if (item.type === 'file' && (item.name.endsWith('.js') || item.name.endsWith('.ts'))) {
+                            setStatus(`Lendo ${item.name}...`);
+                            const fileRes = await fetch(item.download_url);
+                            const text = await fileRes.text();
+                            files.push({ id: item.path, label: item.name });
+
+                            const importRegex = /from\s+['"](?:\.\/|\.\.\/)([^'"]+)['"]/g;
+                            let m;
+                            while ((m = importRegex.exec(text)) !== null) {
+                                relations.push({ source: item.path, target: m[1] });
+                            }
+                        }
+                    }
+                    buildGraph(files, relations);
+                } catch (err) {
+                    alert(err.message);
+                    setStatus('Erro na análise.');
+                }
+            };
+
+            // --- LÓGICA PARA PASTA LOCAL (OPÇÃO B) ---
+            const analyzeFolder = async () => {
+                const dirHandle = await window.showDirectoryPicker();
+                setStatus('Escaneando pasta local...');
+                const files = [];
+                const relations = [];
+
+                async function scan(handle, path = "") {
+                    for await (const entry of handle.values()) {
+                        const fullPath = path + "/" + entry.name;
+                        if (entry.kind === 'directory' && entry.name !== 'node_modules') {
+                            await scan(entry, fullPath);
+                        } else if (entry.name.endsWith('.js') || entry.name.endsWith('.ts')) {
+                            const file = await entry.getFile();
+                            const content = await file.text();
+                            files.push({ id: fullPath, label: entry.name });
+                            const importRegex = /from\s+['"](?:\.\/|\.\.\/)([^'"]+)['"]/g;
+                            let m;
+                            while ((m = importRegex.exec(content)) !== null) {
+                                relations.push({ source: fullPath, target: m[1] });
+                            }
+                        }
+                    }
+                }
+                await scan(dirHandle);
+                buildGraph(files, relations);
+            };
+
+            const buildGraph = (files, relations) => {
+                const newNodes = files.map((f, i) => ({
+                    id: f.id,
+                    data: { label: f.label },
+                    position: { x: Math.random() * 800, y: Math.random() * 600 },
+                    style: { background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px' }
+                }));
+
+                const newEdges = relations.map((rel, i) => ({
+                    id: `e-${i}`,
+                    source: rel.source,
+                    target: files.find(f => f.id.includes(rel.target))?.id || rel.target,
+                    animated: true,
+                    markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' },
+                    style: { stroke: '#64748b' }
+                }));
+
+                setNodes(newNodes);
+                setEdges(newEdges);
+                setStatus('Mapa gerado!');
+            };
+
+            return (
+                <div style={{ width: '100vw', height: '100vh' }}>
+                    <div id="ui-layer">
+                        <h2 style={{marginTop: 0, fontSize: '20px'}}>🗺️ Legacy Map</h2>
+                        
+                        <label style={{fontSize: '12px', color: '#94a3b8'}}>REPOSITÓRIO PÚBLICO</label>
+                        <input 
+                            placeholder="https://github.com/..." 
+                            value={githubUrl}
+                            onChange={(e) => setGithubUrl(e.target.value)}
+                        />
+                        <button onClick={analyzeGithub}>Analisar via GitHub</button>
+                        
+                        <div style={{textAlign: 'center', margin: '10px 0', fontSize: '12px', color: '#475569'}}>— OU —</div>
+                        
+                        <button className="secondary-btn" onClick={analyzeFolder}>Selecionar Pasta Local</button>
+                        
+                        <div className="stats">
+                            <strong>Status:</strong> {status}<br/>
+                            <strong>Arquivos:</strong> {nodes.length}
+                        </div>
+                    </div>
+                    
+                    <ReactFlow nodes={nodes} edges={edges} fitView>
+                        <Background color="#1e293b" gap={20} />
+                        <Controls />
+                    </ReactFlow>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('app'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
