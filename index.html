@@ -2,27 +2,105 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Legacy Map Pro | Visualization Tool</title>
+    <title>Legacy Map Pro</title>
     <link rel="stylesheet" href="style.css">
     
-    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/reactflow@11.10.1/dist/react-flow.standalone.am.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reactflow@11.10.1/dist/style.css">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.5/babel.min.js"></script>
+    <script src="https://unpkg.com/reactflow@11.10.1/dist/react-flow.standalone.am.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/reactflow@11.10.1/dist/style.css">
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
     <header class="main-header">
-        <div style="font-weight: 800; font-size: 20px; letter-spacing: -1px;">🗺️ LEGACY<span style="color: #3b82f6;">MAP</span></div>
-        <div style="font-size: 12px; color: #94a3b8;">v1.0.0-beta</div>
+        <div class="logo">🗺️ LEGACY<span style="color: #3b82f6;">MAP</span></div>
+        <div class="version-tag">v1.0.1</div>
     </header>
 
     <div id="app"></div>
 
     <footer class="main-footer">
-        Desenvolvido para análise de arquiteturas complexas via GitHub API.
+        © 2026 Legacy Map Tool - Visualizador de Arquitetura de Código
     </footer>
 
-    <script type="text/babel" src="./app.js" data-presets="react,stage-3"></script></body>
+    <script type="text/babel" data-presets="env,react">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [ready, setReady] = useState(false);
+            const [url, setUrl] = useState('');
+            const [nodes, setNodes] = useState([]);
+            const [edges, setEdges] = useState([]);
+            const [status, setStatus] = useState('Pronto');
+
+            useEffect(() => {
+                const check = setInterval(() => {
+                    if (window.ReactFlow) {
+                        setReady(true);
+                        clearInterval(check);
+                    }
+                }, 500);
+                return () => clearInterval(check);
+            }, []);
+
+            if (!ready) return <div className="loading-screen">CARREGANDO MOTOR...</div>;
+
+            const RF = window.ReactFlow.default || window.ReactFlow;
+            const { Background, Controls, MarkerType } = window.ReactFlow;
+
+            const analyzeGithub = async () => {
+                setStatus('🔍 Escaneando...');
+                try {
+                    const match = url.match(/github\.com\/([^/]+)\/([^/]+)/);
+                    if (!match) return alert("URL inválida");
+                    const [_, owner, repo] = match;
+                    
+                    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`).then(r => r.json());
+                    const files = res.tree
+                        .filter(f => (f.path.endsWith('.js') || f.path.endsWith('.ts')) && !f.path.includes('node_modules'))
+                        .slice(0, 20);
+                    
+                    const newNodes = files.map((f, i) => ({
+                        id: f.path,
+                        data: { label: f.path.split('/').pop() },
+                        position: { x: (i % 4) * 200, y: Math.floor(i / 4) * 120 },
+                        style: { background: '#3b82f6', color: '#fff', borderRadius: '8px', padding: '10px', width: 150, textAlign: 'center' }
+                    }));
+
+                    setNodes(newNodes);
+                    setStatus('✅ Sucesso!');
+                } catch (err) {
+                    setStatus('❌ Erro na API');
+                }
+            };
+
+            return (
+                <div style={{ width: '100vw', height: 'calc(100vh - 95px)' }}>
+                    <div id="ui-layer">
+                        <div className="input-group">
+                            <label>LINK DO REPOSITÓRIO</label>
+                            <input 
+                                placeholder="https://github.com/..." 
+                                value={url} 
+                                onChange={e => setUrl(e.target.value)} 
+                            />
+                            <button onClick={analyzeGithub}>GERAR MAPA</button>
+                        </div>
+                        <div className="status-box">Status: {status}</div>
+                    </div>
+
+                    <RF nodes={nodes} edges={edges} fitView>
+                        <Background color="#334155" gap={20} />
+                        <Controls />
+                    </RF>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('app'));
+        root.render(<App />);
+    </script>
+</body>
 </html>
