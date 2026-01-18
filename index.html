@@ -3,33 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Legacy Map Pro - Tree View</title>
+    <title>CodeCartographer - Análise Visual de Código</title>
     <link rel="stylesheet" href="style.css">
+    
     <!-- React e ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Favicon inline para evitar erro 404 -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
-    <!-- Adicione esta linha ANTES do </head> -->
+    
+    <!-- Vis Network para gráficos de dependências -->
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/vis-network/styles/vis-network.min.css" />
     
+    <!-- html2canvas para exportação de imagens -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
+    <!-- Chart.js para dashboard de métricas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
+    
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    
     <header class="main-header">
-        <div class="logo">🌳 LEGACY<span style="color: #3b82f6;">TREE</span></div>
-        <div class="version-tag">v3.0 (Tree View)</div>
+        <div class="logo">
+            <i class="fas fa-map"></i> 
+            <span style="color: #3b82f6;">CODE</span>CARTOGRAPHER
+        </div>
+        <div class="header-controls">
+            <div class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </div>
+            <div class="version-tag">v4.0 (Professional)</div>
+        </div>
     </header>
 
     <div id="app"></div>
 
     <footer class="main-footer">
-        Conectado à API do GitHub • 2026 • Visualização em Árvore
+        <div class="footer-content">
+            <div class="cache-status" id="cacheStatus"></div>
+            <div class="footer-links">
+                <span>Conectado à API do GitHub</span>
+                <span>•</span>
+                <span id="currentYear">2024</span>
+                <span>•</span>
+                <a href="#" onclick="clearCache()" style="color: #94a3b8; text-decoration: none;">
+                    <i class="fas fa-trash-alt"></i> Limpar Cache
+                </a>
+            </div>
+        </div>
     </footer>
 
     <!-- Nosso aplicativo React -->
     <script src="app.js"></script>
+    
+    <script>
+        // Script para tema claro/escuro
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            document.body.classList.toggle('light-theme');
+            const icon = this.querySelector('i');
+            if (document.body.classList.contains('light-theme')) {
+                icon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'light');
+            } else {
+                icon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+        
+        // Carregar tema salvo
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-theme');
+            document.getElementById('themeToggle').querySelector('i').className = 'fas fa-sun';
+        }
+        
+        // Atualizar ano atual
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        // Função para limpar cache
+        function clearCache() {
+            if (confirm('Tem certeza que deseja limpar todo o cache? Isso removerá todas as análises salvas.')) {
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith('codemap_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                document.getElementById('cacheStatus').innerHTML = 
+                    '<i class="fas fa-check-circle"></i> Cache limpo com sucesso!';
+                setTimeout(() => {
+                    document.getElementById('cacheStatus').innerHTML = '';
+                }, 3000);
+            }
+            return false;
+        }
+    </script>
 </body>
 </html>
