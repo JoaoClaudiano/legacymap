@@ -10,8 +10,9 @@
     <script type="importmap">
     {
         "imports": {
-            "react": "https://esm.sh/react@18.2.0",
-            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+            "react": "https://esm.sh/react@18.2.0?dev",
+            "react-dom": "https://esm.sh/react-dom@18.2.0?dev",
+            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?dev",
             "reactflow": "https://esm.sh/reactflow@11.10.1?external=react,react-dom"
         }
     }
@@ -22,17 +23,16 @@
 <body>
     <header class="main-header">
         <div class="logo">🗺️ LEGACY<span style="color: #3b82f6;">MAP</span></div>
-        <div class="version-tag">v2.0 (ESM)</div>
+        <div class="version-tag">v2.1 (Fix-ESM)</div>
     </header>
 
     <div id="app"></div>
 
     <footer class="main-footer">
-        Dica: Azul = JavaScript | Escuro = TypeScript | Ciano = React
+        Dica: Clique nos nós para abrir o código no GitHub.
     </footer>
 
-    <script type="text/babel" data-type="module">
-        // Agora importamos diretamente. Se a URL funcionar, a variável EXISTE.
+    <script type="text/babel" data-type="module" data-presets="env,react">
         import React, { useState, useCallback } from 'react';
         import { createRoot } from 'react-dom/client';
         import ReactFlow, { Background, Controls } from 'reactflow';
@@ -41,10 +41,9 @@
             const [url, setUrl] = useState('');
             const [nodes, setNodes] = useState([]);
             const [edges, setEdges] = useState([]);
-            const [status, setStatus] = useState('Pronto para mapear');
+            const [status, setStatus] = useState('Pronto');
             const [repoBase, setRepoBase] = useState('');
 
-            // Cores por extensão
             const getFileColor = (path) => {
                 if (path.endsWith('.ts')) return '#1e40af';
                 if (path.endsWith('.tsx')) return '#1d4ed8';
@@ -54,59 +53,40 @@
             };
 
             const onNodeClick = useCallback((event, node) => {
-                if (repoBase && node.id) {
-                    window.open(`${repoBase}/blob/main/${node.id}`, '_blank');
-                }
+                if (repoBase) window.open(`${repoBase}/blob/main/${node.id}`, '_blank');
             }, [repoBase]);
 
             const analyzeGithub = async () => {
-                setStatus('🔍 Conectando ao GitHub...');
+                setStatus('🔍 Buscando dados...');
                 try {
                     const match = url.match(/github\.com\/([^/]+)\/([^/]+)/);
-                    if (!match) return alert("URL inválida. Ex: https://github.com/facebook/react");
+                    if (!match) return alert("URL inválida.");
                     const [_, owner, repo] = match;
-                    
                     setRepoBase(`https://github.com/${owner}/${repo}`);
 
-                    // 1. Busca a árvore de arquivos
                     const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`).then(r => r.json());
-                    
-                    if (!res.tree) throw new Error("Branch 'main' não encontrada ou repo privado.");
+                    if (!res.tree) throw new Error();
 
-                    // 2. Filtra arquivos relevantes
                     const files = res.tree
-                        .filter(f => (f.path.match(/\.(js|ts|jsx|tsx|css)$/)) && !f.path.includes('node_modules'))
-                        .slice(0, 40); // Limite aumentado
+                        .filter(f => f.path.match(/\.(js|ts|jsx|tsx|css)$/) && !f.path.includes('node_modules'))
+                        .slice(0, 40);
                     
-                    if (files.length === 0) {
-                        setStatus('⚠️ Nenhum arquivo .js/.ts encontrado na raiz.');
-                        return;
-                    }
-
-                    // 3. Cria os Nós (Nodes)
                     const newNodes = files.map((f, i) => ({
                         id: f.path,
                         data: { label: f.path.split('/').pop() },
                         position: { x: (i % 6) * 180, y: Math.floor(i / 6) * 120 },
                         style: { 
-                            background: getFileColor(f.path), 
-                            color: '#fff', 
-                            borderRadius: '6px', 
-                            padding: '10px', 
-                            width: 150, 
-                            fontSize: '11px',
-                            textAlign: 'center',
-                            cursor: 'pointer',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                            background: getFileColor(f.path), color: '#fff', 
+                            borderRadius: '6px', padding: '10px', width: 150, 
+                            fontSize: '11px', textAlign: 'center', cursor: 'pointer',
+                            border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
                         }
                     }));
 
                     setNodes(newNodes);
-                    setStatus(`✅ Mapa gerado com ${newNodes.length} arquivos.`);
+                    setStatus(`✅ ${newNodes.length} arquivos mapeados.`);
                 } catch (err) {
-                    console.error(err);
-                    setStatus('❌ Erro: Verifique se o repositório é público.');
+                    setStatus('❌ Erro: Repositório não encontrado.');
                 }
             };
 
@@ -115,21 +95,16 @@
                     <div id="ui-layer">
                         <div className="input-group">
                             <input 
-                                placeholder="Cole o link do GitHub aqui..." 
+                                placeholder="Link do GitHub" 
                                 value={url} 
                                 onChange={e => setUrl(e.target.value)} 
                             />
-                            <button onClick={analyzeGithub}>GERAR MAPA VISUAL</button>
+                            <button onClick={analyzeGithub}>MAPEAR</button>
                         </div>
-                        <div className="status-box">{status}</div>
+                        <div className="status-box">Status: {status}</div>
                     </div>
 
-                    <ReactFlow 
-                        nodes={nodes} 
-                        edges={edges} 
-                        onNodeClick={onNodeClick} 
-                        fitView
-                    >
+                    <ReactFlow nodes={nodes} edges={edges} onNodeClick={onNodeClick} fitView>
                         <Background color="#1e293b" gap={25} />
                         <Controls />
                     </ReactFlow>
@@ -137,7 +112,8 @@
             );
         }
 
-        const root = createRoot(document.getElementById('app'));
+        const container = document.getElementById('app');
+        const root = createRoot(container);
         root.render(<App />);
     </script>
 </body>
