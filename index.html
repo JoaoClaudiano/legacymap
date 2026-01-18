@@ -2,151 +2,82 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Legacy Map Pro</title>
     <style>
         body, html, #app { margin: 0; width: 100%; height: 100%; background: #0f172a; color: white; font-family: sans-serif; overflow: hidden; }
-        #ui-layer { position: absolute; top: 20px; left: 20px; z-index: 10; background: rgba(30, 41, 59, 0.95); padding: 20px; border-radius: 12px; border: 1px solid #334155; backdrop-filter: blur(8px); width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #1e293b; color: white; margin-bottom: 10px; box-sizing: border-box; display: block; }
-        button { background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-bottom: 10px; transition: 0.2s; }
-        button:hover { background: #2563eb; }
-        .stats { font-size: 12px; color: #94a3b8; border-top: 1px solid #334155; padding-top: 10px; margin-top: 10px; }
-        .loading { display: flex; justify-content: center; align-items: center; height: 100vh; background: #0f172a; color: #3b82f6; font-weight: bold; }
+        #ui-layer { position: absolute; top: 20px; left: 20px; z-index: 10; background: rgba(30, 41, 59, 0.95); padding: 20px; border-radius: 12px; border: 1px solid #334155; backdrop-filter: blur(8px); width: 310px; }
+        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #1e293b; color: white; margin-bottom: 10px; box-sizing: border-box; }
+        button { background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
+        .loading { display: flex; height: 100vh; justify-content: center; align-items: center; font-family: monospace; }
     </style>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
     <script src="https://unpkg.com/reactflow@11.10.1/dist/react-flow.standalone.am.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/reactflow@11.10.1/dist/style.css">
-    
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
-    <div id="app">
-        <div class="loading">Iniciando Legacy Map...</div>
-    </div>
+    <div id="app"></div>
 
     <script type="text/babel">
-        // 1. Função segura para extrair componentes do ReactFlow global
-        const getRF = () => {
-            const rf = window.ReactFlow;
-            if (!rf) return null;
-            // Verifica se as propriedades estão no nível raiz ou dentro de .default
-            return {
-                Component: rf.ReactFlow || rf.default || rf,
-                Background: rf.Background,
-                Controls: rf.Controls,
-                MarkerType: rf.MarkerType
-            };
-        };
-
         const { useState, useEffect } = React;
 
         function App() {
-            const [rfComponents, setRfComponents] = useState(null);
+            const [ready, setReady] = useState(false);
             const [nodes, setNodes] = useState([]);
             const [edges, setEdges] = useState([]);
-            const [githubUrl, setGithubUrl] = useState('');
-            const [status, setStatus] = useState('Pronto');
+            const [url, setUrl] = useState('');
 
-            // 2. Aguarda o ReactFlow estar disponível no objeto window
             useEffect(() => {
-                const checkRF = setInterval(() => {
-                    const found = getRF();
-                    if (found && found.Component) {
-                        setRfComponents(found);
-                        clearInterval(checkRF);
-                    }
-                }, 100);
-                return () => clearInterval(checkRF);
+                // Debug para ver o que o ReactFlow injetou no window
+                console.log("Objeto ReactFlow encontrado:", window.ReactFlow);
+                
+                if (window.ReactFlow) {
+                    setReady(true);
+                }
             }, []);
 
-            if (!rfComponents) return <div class="loading">Carregando bibliotecas...</div>;
+            if (!ready) return <div className="loading">Aguardando ReactFlow...</div>;
 
-            const { Component: ReactFlow, Background, Controls, MarkerType } = rfComponents;
+            // Mapeamento dinâmico dos componentes
+            const ReactFlow = window.ReactFlow.default || window.ReactFlow.ReactFlow || window.ReactFlow;
+            const Background = window.ReactFlow.Background;
+            const Controls = window.ReactFlow.Controls;
 
-            const analyzeGithub = async () => {
-                setStatus('Buscando repositório...');
-                try {
-                    const match = githubUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
-                    if (!match) return alert("URL Inválida. Use: https://github.com/usuario/repo");
-                    
-                    const [_, owner, repo] = match;
-                    const repoInfo = await fetch(`https://api.github.com/repos/${owner}/${repo}`).then(r => r.json());
-                    const branch = repoInfo.default_branch;
-                    const treeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`).then(r => r.json());
-                    
-                    const sourceFiles = treeRes.tree.filter(item => 
-                        (item.path.endsWith('.js') || item.path.endsWith('.ts')) && !item.path.includes('node_modules')
-                    );
-
-                    setStatus(`Lendo ${Math.min(sourceFiles.length, 20)} arquivos...`);
-                    
-                    const files = [];
-                    const relations = [];
-
-                    // Loop limitado para não estourar limite da API rapidamente
-                    for (const item of sourceFiles.slice(0, 20)) {
-                        const fileRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${item.path}`);
-                        const text = await fileRes.text();
-                        files.push({ id: item.path, label: item.path.split('/').pop() });
-
-                        const importRegex = /from\s+['"]([^'"]+)['"]/g;
-                        let m;
-                        while ((m = importRegex.exec(text)) !== null) {
-                            relations.push({ source: item.path, target: m[1].replace(/^\.\//, '') });
-                        }
-                    }
-
-                    setNodes(files.map(f => ({
-                        id: f.id,
-                        data: { label: f.label },
-                        position: { x: Math.random() * 500, y: Math.random() * 500 },
-                        style: { background: '#3b82f6', color: '#fff', borderRadius: '8px', padding: '10px', width: 120 }
-                    })));
-
-                    setEdges(relations.map((rel, i) => ({
-                        id: `e-${i}`,
-                        source: rel.source,
-                        target: files.find(f => f.id.endsWith(rel.target))?.id || rel.target,
-                        animated: true,
-                        markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' }
-                    })).filter(e => files.some(f => f.id === e.target)));
-
-                    setStatus('Análise completa!');
-                } catch (err) {
-                    console.error(err);
-                    setStatus('Erro na conexão.');
-                }
+            const analyze = async () => {
+                const match = url.match(/github\.com\/([^/]+)\/([^/]+)/);
+                if (!match) return;
+                const [_, owner, repo] = match;
+                
+                const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`).then(r => r.json());
+                const files = res.tree.filter(f => f.path.endsWith('.js')).slice(0, 15);
+                
+                setNodes(files.map((f, i) => ({
+                    id: f.path,
+                    data: { label: f.path.split('/').pop() },
+                    position: { x: i * 150, y: i * 50 },
+                    style: { background: '#3b82f6', color: '#fff', padding: '10px', borderRadius: '5px' }
+                })));
             };
 
             return (
-                <div style={{ width: '100%', height: '100%' }}>
+                <div style={{ width: '100vw', height: '100vh' }}>
                     <div id="ui-layer">
-                        <h2 style={{marginTop: 0}}>🗺️ Legacy Map</h2>
-                        <input 
-                            placeholder="Link do GitHub (ex: https://github.com/facebook/react)" 
-                            value={githubUrl}
-                            onChange={(e) => setGithubUrl(e.target.value)}
-                        />
-                        <button onClick={analyzeGithub}>Mapear Repositório</button>
-                        <div className="stats">
-                            <strong>Status:</strong> {status}<br/>
-                            <strong>Arquivos:</strong> {nodes.length}
-                        </div>
+                        <h3>🗺️ Legacy Map</h3>
+                        <input placeholder="URL do Github" value={url} onChange={e => setUrl(e.target.value)} />
+                        <button onClick={analyze}>Mapear</button>
+                        <p style={{fontSize: '10px'}}>Arquivos: {nodes.length}</p>
                     </div>
-                    
                     <ReactFlow nodes={nodes} edges={edges} fitView>
-                        <Background color="#1e293b" gap={20} />
+                        <Background />
                         <Controls />
                     </ReactFlow>
                 </div>
             );
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('app'));
-        root.render(<App />);
+        ReactDOM.createRoot(document.getElementById('app')).render(<App />);
     </script>
 </body>
 </html>
