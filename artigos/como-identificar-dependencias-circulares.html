@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- TAGS ÚNICAS PARA ESTE ARTIGO -->
+    <title>Como Identificar e Corrigir Dependências Circulares em 4 Passos | CodeCartographer</title>
+    <meta name="description" content="Guia passo a passo para encontrar e corrigir dependências circulares em projetos JavaScript/TypeScript. Aprenda 3 estratégias práticas com exemplos de código.">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Como Identificar e Corrigir Dependências Circulares em 4 Passos">
+    <meta property="og:description" content="Guia passo a passo para encontrar e corrigir dependências circulares em projetos JavaScript/TypeScript.">
+    <meta property="og:image" content="https://joaoclaudiano.github.io/legacymap/images/artigos/dependencias-circulares.jpg">
+    <meta property="og:url" content="https://joaoclaudiano.github.io/legacymap/artigos/como-identificar-dependencias-circulares.html">
+    <meta property="og:type" content="article">
+    
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Como Identificar e Corrigir Dependências Circulares em 4 Passos">
+    <meta name="twitter:description" content="Guia passo a passo para encontrar e corrigir dependências circulares em projetos JavaScript/TypeScript.">
+    
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Como Identificar e Corrigir Dependências Circulares em 4 Passos",
+      "description": "Guia passo a passo para encontrar e corrigir dependências circulares em projetos JavaScript/TypeScript.",
+      "image": "https://joaoclaudiano.github.io/legacymap/images/artigos/dependencias-circulares.jpg",
+      "author": {
+        "@type": "Person",
+        "name": "João Claudiano"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "CodeCartographer",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://joaoclaudiano.github.io/legacymap/favicon.ico"
+        }
+      },
+      "datePublished": "2026-01-20",
+      "dateModified": "2026-01-20"
+    }
+    </script>
+    
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Estilos do template (os mesmos do template-artigo.html) */
+        .article-container { max-width: 800px; margin: 2rem auto; padding: 0 1.5rem; }
+        .article-header { margin-bottom: 3rem; }
+        .article-title { font-size: 2.5rem; line-height: 1.2; margin-bottom: 1rem; color: #f8fafc; }
+        .article-meta { display: flex; flex-wrap: wrap; gap: 1.5rem; color: #94a3b8; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid #334155; }
+        .article-meta span { display: flex; align-items: center; gap: 0.5rem; }
+        .article-content { font-size: 1.125rem; line-height: 1.8; color: #e2e8f0; }
+        .article-content h2 { font-size: 1.75rem; margin-top: 3rem; margin-bottom: 1.5rem; color: #f1f5f9; padding-bottom: 0.5rem; border-bottom: 2px solid #3b82f6; }
+        .article-content h3 { font-size: 1.5rem; margin-top: 2.5rem; margin-bottom: 1rem; color: #f1f5f9; }
+        .article-content p { margin-bottom: 1.5rem; }
+        .article-content ul, .article-content ol { margin-bottom: 1.5rem; padding-left: 2rem; }
+        .article-content li { margin-bottom: 0.75rem; }
+        .article-content code { background: #1e293b; padding: 0.2rem 0.5rem; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.9em; }
+        .article-content pre { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 1.5rem; overflow-x: auto; margin: 1.5rem 0; }
+        .article-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 2rem 0; border: 1px solid #334155; }
+        .article-cta { background: #1e293b; border-radius: 10px; padding: 2rem; margin: 3rem 0; text-align: center; border-left: 4px solid #3b82f6; }
+        .cta-button { display: inline-block; background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 1rem; transition: background 0.2s; }
+        .cta-button:hover { background: #2563eb; }
+        .article-navigation { display: flex; justify-content: space-between; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #334155; }
+        .nav-prev, .nav-next { color: #94a3b8; text-decoration: none; max-width: 45%; }
+        .nav-prev:hover, .nav-next:hover { color: #3b82f6; }
+        .nav-label { display: block; font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem; }
+        @media (max-width: 768px) { .article-title { font-size: 2rem; } .article-meta { flex-direction: column; gap: 0.75rem; } .article-navigation { flex-direction: column; gap: 1.5rem; } .nav-prev, .nav-next { max-width: 100%; } }
+    </style>
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <header class="main-header">
+        <div class="logo">
+            <i class="fas fa-map"></i> 
+            <span style="color: #3b82f6;">CODE</span>CARTOGRAPHER
+        </div>
+        <nav class="main-nav">
+            <a href="../index.html" class="nav-link">
+                <i class="fas fa-home"></i> Início
+            </a>
+            <a href="../artigos.html" class="nav-link">
+                <i class="fas fa-newspaper"></i> Artigos
+            </a>
+        </nav>
+        <div class="header-controls">
+            <div class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo do artigo -->
+    <div class="article-container">
+        <article>
+            <header class="article-header">
+                <h1 class="article-title">Como Identificar e Corrigir Dependências Circulares em 4 Passos</h1>
+                
+                <div class="article-meta">
+                    <span><i class="far fa-calendar"></i> Publicado em: <time datetime="2026-01-20">20 de Janeiro, 2026</time></span>
+                    <span><i class="far fa-folder"></i> Categoria: Tutorial Prático</span>
+                    <span><i class="far fa-clock"></i> Tempo de leitura: 8 minutos</span>
+                </div>
+            </header>
+
+            <div class="article-content">
+                <p>Dependências circulares são um dos problemas mais <strong>silenciosos e insidiosos</strong> em código legado. Elas criam acoplamento invisível entre módulos, dificultam testes unitários e podem causar falhas inesperadas na inicialização da aplicação. Neste guia prático, você vai aprender a usar o <strong>CodeCartographer</strong> para detectar esses ciclos em seu projeto e, mais importante, estratégias eficazes para desembaraçá-los.</p>
+                
+                <p>Uma dependência circular ocorre quando o módulo A depende do módulo B, que por sua vez depende do módulo A (ciclo direto), ou quando há uma cadeia de dependências que eventualmente retorna ao módulo original (ciclo indireto).</p>
+                
+                <h2>Passo 1: Cole a URL do seu Repositório GitHub</h2>
+                <p>Acesse a <a href="../index.html">página principal do CodeCartographer</a> e cole a URL completa do seu repositório público no campo indicado. A ferramenta suporta qualquer projeto JavaScript ou TypeScript hospedado no GitHub.</p>
+                
+                <div class="article-tip">
+                    <p><strong>💡 Dica:</strong> Para análise mais rápida em projetos grandes, você pode especificar um subdiretório específico adicionando <code>#caminho/para/pasta</code> no final da URL.</p>
+                </div>
+                
+                <h2>Passo 2: Identifique Ciclos no Grafo Gerado</h2>
+                <p>Após a análise, observe o grafo de dependências. <strong>Ciclos são visualmente evidentes</strong> como grupos de nós fortemente conectados formando um "anel" ou "laço".</p>
+                
+                <p>Padrões comuns de ciclos:</p>
+                <ul>
+                    <li><strong>Ciclo direto:</strong> A → B → A (fácil de identificar)</li>
+                    <li><strong>Ciclo indireto:</strong> A → B → C → A (mais comum em projetos grandes)</li>
+                    <li><strong>Ciclo em estrela:</strong> Múltiplos módulos interdependentes</li>
+                </ul>
+                
+                <h2>Passo 3: Use as Ferramentas de Análise para Isolar o Problema</h2>
+                <p>O CodeCartographer oferece várias funcionalidades para investigar ciclos:</p>
+                
+                <ol>
+                    <li><strong>Filtro de ciclos:</strong> Ative a opção "Mostrar apenas ciclos" para focar apenas nas dependências problemáticas</li>
+                    <li><strong>Zoom e destaque:</strong> Clique em qualquer módulo para destacar suas conexões</li>
+                    <li><strong>Lista de imports:</strong> Revise a lista detalhada de imports/exports para confirmar relações</li>
+                </ol>
+                
+                <pre><code>// Exemplo de dependência circular em JavaScript
+// arquivo userService.js
+import { validateUser } from './validator.js';
+export function createUser(data) {
+    return validateUser(data) ? saveUser(data) : null;
+}
+
+// arquivo validator.js  
+import { createUser } from './userService.js'; // ⚠️ CICLO!
+export function validateUser(data) {
+    // usa createUser indiretamente
+    return data && data.name;
+}</code></pre>
+                
+                <h2>Passo 4: Aplique Estratégias de Correção</h2>
+                <p>Com o ciclo identificado, escolha uma destas estratégias:</p>
+                
+                <h3>Estratégia 1: Introdução de Interfaces</h3>
+                <p>Crie uma interface ou contrato que ambos os módulos implementem, removendo a dependência direta.</p>
+                
+                <h3>Estratégia 2: Inversão de Dependência (DIP)</h3>
+                <p>Faça com que ambos os módulos dependam de uma abstração, não um do outro.</p>
+                
+                <h3>Estratégia 3: Extração de Módulo Comum</h3>
+                <p>Extraia a funcionalidade compartilhada para um terceiro módulo que ambos possam importar.</p>
+                
+                <h2>Benefícios da Eliminação de Ciclos</h2>
+                <ul>
+                    <li><strong>Testabilidade:</strong> Módulos isolados são mais fáceis de testar</li>
+                    <li><strong>Manutenibilidade:</strong> Mudanças têm impacto localizado</li>
+                    <li><strong>Inicialização:</strong> Elimina problemas de ordem de carregamento</li>
+                    <li><strong>Compreensão:</strong> Fluxo de dependências mais claro para novos desenvolvedores</li>
+                </ul>
+                
+                <!-- Call to Action -->
+                <div class="article-cta">
+                    <h3>🎯 Pronto para aplicar no seu projeto?</h3>
+                    <p>Use o CodeCartographer agora mesmo para analisar sua própria base de código e identificar dependências circulares.</p>
+                    <a href="../index.html" class="cta-button">
+                        <i class="fas fa-play-circle"></i> Analisar Meu Código Grátis
+                    </a>
+                </div>
+            </div>
+
+            <!-- Navegação entre artigos -->
+            <footer class="article-navigation">
+                <a href="5-problemas-arquitetura-revela.html" class="nav-next" style="margin-left: auto;">
+                    <span class="nav-label">Próximo artigo →</span>
+                    <span>5 Problemas de Arquitetura que um Mapa Revela</span>
+                </a>
+            </footer>
+        </article>
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <span>Conectado à API do GitHub</span>
+                <span>•</span>
+                <a href="../guia.html"><i class="fas fa-book"></i> Como Usar</a>
+                <span>•</span>
+                <a href="../politica-de-privacidade.html"><i class="fas fa-shield-alt"></i> Privacidade</a>
+                <span>•</span>
+                <a href="../contato.html"><i class="fas fa-envelope"></i> Contato</a>
+                <span>•</span>
+                <a href="../artigos.html"><i class="fas fa-newspaper"></i> Artigos</a>
+                <span>•</span>
+                <span id="currentYear">2026</span>
+                <span>•</span>
+                <a href="#" onclick="clearCache()"><i class="fas fa-trash-alt"></i> Limpar Cache</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Tema claro/escuro
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            document.body.classList.toggle('light-theme');
+            const icon = this.querySelector('i');
+            icon.className = document.body.classList.contains('light-theme') ? 'fas fa-sun' : 'fas fa-moon';
+            localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+        });
+        
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-theme');
+            document.getElementById('themeToggle').querySelector('i').className = 'fas fa-sun';
+        }
+        
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        function clearCache() {
+            if (confirm('Tem certeza que deseja limpar todo o cache?')) {
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith('codemap_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                alert('Cache limpo com sucesso!');
+            }
+            return false;
+        }
+    </script>
+</body>
+</html>
