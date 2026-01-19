@@ -4,525 +4,317 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Artigos & Guias - CodeCartographer</title>
-    <meta name="description" content="Tutoriais e artigos sobre análise de código, mapas de dependência, arquitetura de software e refatoração com CodeCartographer.">
-    <meta name="keywords" content="mapa dependências, código legado, análise código, refatoração, arquitetura software, dependências circulares">
+    <meta name="description" content="Biblioteca completa de artigos sobre análise de código, arquitetura de software, refatoração e boas práticas de desenvolvimento.">
+    <meta name="keywords" content="artigos programação, análise código, arquitetura software, tutoriais desenvolvimento, refatoração código">
     
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Estilos para a funcionalidade expandir/recolher -->
     <style>
-        .article-excerpt {
+        /* Estilos específicos para página de listagem */
+        .articles-listing {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
             margin-bottom: 1rem;
-            display: block;
         }
-        .article-full-content {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #334155;
-            display: none;
+        
+        .page-subtitle {
+            color: #94a3b8;
+            font-size: 1.125rem;
+            max-width: 600px;
+            margin: 0 auto 2rem;
         }
-        .read-more-toggle {
-            cursor: pointer;
+        
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .article-card-listing {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 1.75rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid #3b82f6;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .article-card-listing:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .article-category {
             display: inline-block;
-            margin-top: 1rem;
+            background: rgba(59, 130, 246, 0.1);
             color: #3b82f6;
-            text-decoration: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
             font-weight: 500;
+            margin-bottom: 1rem;
         }
-        .read-more-toggle:hover {
-            text-decoration: underline;
+        
+        .article-title-listing {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.3;
         }
-        .article-title-link {
+        
+        .article-title-listing a {
             color: #f1f5f9;
             text-decoration: none;
         }
-        .article-title-link:hover {
+        
+        .article-title-listing a:hover {
             color: #3b82f6;
+        }
+        
+        .article-excerpt-listing {
+            color: #cbd5e1;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+        
+        .article-meta-listing {
+            display: flex;
+            justify-content: space-between;
+            color: #94a3b8;
+            font-size: 0.875rem;
+            margin-top: auto;
+        }
+        
+        .read-time {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 3rem 0;
+        }
+        
+        .pagination a {
+            padding: 0.5rem 1rem;
+            background: #1e293b;
+            color: #cbd5e1;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .pagination a:hover {
+            background: #334155;
+        }
+        
+        .pagination .current {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .no-articles {
+            text-align: center;
+            padding: 3rem;
+            color: #94a3b8;
+        }
+        
+        @media (max-width: 768px) {
+            .articles-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Cabeçalho com navegação -->
+    <!-- Cabeçalho -->
     <header class="main-header">
         <div class="logo">
             <i class="fas fa-map"></i> 
             <span style="color: #3b82f6;">CODE</span>CARTOGRAPHER
         </div>
+        <nav class="main-nav">
+            <a href="index.html" class="nav-link">
+                <i class="fas fa-home"></i> Início
+            </a>
+            <a href="artigos.html" class="nav-link active">
+                <i class="fas fa-newspaper"></i> Artigos
+            </a>
+        </nav>
         <div class="header-controls">
             <div class="theme-toggle" id="themeToggle">
                 <i class="fas fa-moon"></i>
             </div>
-            <div class="version-tag">v4.0 (Professional)</div>
         </div>
     </header>
 
-    <div class="content-with-sidebar">
-        <!-- Conteúdo Principal: Lista de Artigos -->
-        <main class="articles-main">
-            <h1>Artigos & Guias</h1>
-            <p class="page-subtitle">Aprenda sobre análise de código, arquitetura e boas práticas.</p>
+    <!-- Listagem de artigos -->
+    <div class="articles-listing">
+        <header class="page-header">
+            <h1 class="page-title">Artigos & Guias</h1>
+            <p class="page-subtitle">Aprenda sobre análise de código, arquitetura de software, refatoração e boas práticas de desenvolvimento.</p>
+        </header>
 
+        <!-- Grid de artigos -->
+        <div class="articles-grid" id="articlesGrid">
             <!-- Artigo 1 -->
-            <article class="article-card" id="guia-dependencias-circulares">
-                <h2><a href="javascript:void(0);" class="article-title-link">Como Identificar e Corrigir Dependências Circulares em 4 Passos</a></h2>
-                <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 20 de Janeiro, 2026 | <i class="far fa-folder"></i> Tutorial Prático</p>
-                
-                <p class="article-excerpt">Dependências circulares são um dos problemas mais silenciosos em código legado. Elas criam acoplamento invisível, dificultam testes e podem causar falhas inesperadas na inicialização.</p>
-                
-                <div class="article-full-content">
-                    <p>Neste guia prático, você vai aprender a usar o <strong>CodeCartographer</strong> para detectar esses ciclos em seu projeto e, mais importante, estratégias para desembaraçá-los.</p>
-                    
-                    <h3>Passo a Passo com a Ferramenta</h3>
-                    <p>1. Cole a URL do seu repositório no GitHub.<br>
-                    2. No grafo gerado, busque por <em>clusters</em> de nós fortemente conectados formando um "anel".<br>
-                    3. Use a função de busca para isolar módulos suspeitos.<br>
-                    4. Analise a lista de imports gerada pela ferramenta para confirmar o ciclo.</p>
-                    
-                    <p>Com o problema mapeado, discutimos 3 estratégias de correção: introdução de interfaces, inversão de dependência (DIP) e a criação de um módulo comum.</p>
+            <article class="article-card-listing">
+                <span class="article-category">Tutorial Prático</span>
+                <h2 class="article-title-listing">
+                    <a href="artigos/como-identificar-dependencias-circulares.html">Como Identificar e Corrigir Dependências Circulares em 4 Passos</a>
+                </h2>
+                <p class="article-excerpt-listing">Aprenda a detectar e resolver um dos problemas mais comuns em código legado usando análise visual. Guia passo a passo com estratégias práticas.</p>
+                <div class="article-meta-listing">
+                    <span><i class="far fa-calendar"></i> 20 Jan, 2026</span>
+                    <span class="read-time"><i class="far fa-clock"></i> 8 min</span>
                 </div>
-                
-                <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Ler guia completo com exemplos de código →" data-less-text="Mostrar menos ↑">
-                    Ler guia completo com exemplos de código →
-                </a>
             </article>
 
             <!-- Artigo 2 -->
-            <article class="article-card" id="mapa-radar-desenvolvedor">
-                <h2><a href="javascript:void(0);" class="article-title-link">Mapa de Dependências: O Radar do Desenvolvedor para Navegar em Código Legado</a></h2>
-                <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 18 de Janeiro, 2026 | <i class="far fa-folder"></i> Arquitetura & Conceitos</p>
-                
-                <p class="article-excerpt">Entrar em um projeto legado pode ser como explorar uma cidade desconhecida sem mapa. Você sabe que há edifícios (módulos) e ruas (dependências), mas não compreende a lógica da cidade.</p>
-                
-                <div class="article-full-content">
-                    <p>Um <strong>mapa de dependências</strong> é exatamente o radar que falta. Este artigo explica como essa visualização transcende a simples listagem de arquivos, revelando a <em>topologia</em> e a <em>saúde estrutural</em> do software.</p>
-                    
-                    <p>Abordamos como padrões no grafo — como nós extremamente conectados ("hubs") ou módulos isolados ("ilhas") — correspondem a conceitos de arquitetura como "God Class" ou "código órfão".</p>
-                    
-                    <h3>Padrões Comuns no Grafo</h3>
-                    <ul>
-                        <li><strong>Hubs:</strong> Módulos com muitas conexões - podem indicar violação do Single Responsibility Principle</li>
-                        <li><strong>Ilhas:</strong> Módulos isolados - possível código morto ou funcionalidade desacoplada</li>
-                        <li><strong>Clusters densos:</strong> Grupos fortemente conectados - podem representar bounded contexts</li>
-                    </ul>
-                    
-                    <p>Aprenda a linguagem visual do seu código para tomar decisões de refatoração com confiança, baseadas em evidências e não em intuição.</p>
+            <article class="article-card-listing">
+                <span class="article-category">Arquitetura & Conceitos</span>
+                <h2 class="article-title-listing">
+                    <a href="artigos/mapa-dependencias-radar-desenvolvedor.html">Mapa de Dependências: O Radar do Desenvolvedor para Código Legado</a>
+                </h2>
+                <p class="article-excerpt-listing">Entenda como a visualização de dependências transcende listas de arquivos, revelando a topologia e saúde estrutural do software.</p>
+                <div class="article-meta-listing">
+                    <span><i class="far fa-calendar"></i> 18 Jan, 2026</span>
+                    <span class="read-time"><i class="far fa-clock"></i> 6 min</span>
                 </div>
-                
-                <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Ler artigo completo e entender a linguagem do seu código →" data-less-text="Mostrar menos ↑">
-                    Ler artigo completo e entender a linguagem do seu código →
-                </a>
             </article>
 
             <!-- Artigo 3 -->
-            <article class="article-card" id="5-problemas-arquitetura">
-                <h2><a href="javascript:void(0);" class="article-title-link">5 Problemas de Arquitetura que um Mapa de Dependências Revela Imediatamente</a></h2>
-                <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 15 de Janeiro, 2026 | <i class="far fa-folder"></i> Análise & Diagnóstico</p>
-                
-                <p class="article-excerpt">Muitos problemas de arquitetura são invisíveis durante a leitura linha-a-linha do código, mas saltam aos olhos quando vistos de cima.</p>
-                
-                <div class="article-full-content">
-                    <p>Listamos os 5 padrões mais comuns que a visualização do CodeCartographer expõe:</p>
-                    
-                    <ol>
-                        <li><strong>O "Grande Hub" (God Object):</strong> Um único módulo com dezenas de dependências entrando e saindo, indicando uma classe que faz coisas demais.</li>
-                        <li><strong>Ciclos de Dependência:</strong> Módulos que dependem indiretamente de si mesmos, criando um sistema frágil e difícil de testar.</li>
-                        <li><strong>Módulos Órfãos:</strong> Código que não é importado por ninguém, um forte candidato a "dead code" ou funcionalidade abandonada.</li>
-                        <li><strong>Acoplamento em Cascata:</strong> Uma longa cadeia linear de dependências onde uma mudança no início impacta todos os outros.</li>
-                        <li><strong>Fronteiras de Contexto Desrespeitadas:</strong> Importações cruzadas entre camadas (ex: UI importando lógica de acesso a dados), violando princípios de arquitetura limpa.</li>
-                    </ol>
-                    
-                    <h3>Como Identificar Cada Problema</h3>
-                    <p>Para cada padrão, mostramos como configurar filtros no CodeCartographer para destacar essas estruturas problemáticas. Por exemplo, use o filtro de "grau de conexão" para encontrar hubs, ou o filtro de "dependências circulares" para detectar ciclos automaticamente.</p>
-                    
-                    <p>Aprenda a identificar cada um desses padrões no grafo gerado pela ferramenta e tome ações corretivas antes que se tornem dívida técnica crítica.</p>
+            <article class="article-card-listing">
+                <span class="article-category">Análise & Diagnóstico</span>
+                <h2 class="article-title-listing">
+                    <a href="artigos/5-problemas-arquitetura-revela.html">5 Problemas de Arquitetura que um Mapa de Dependências Revela Imediatamente</a>
+                </h2>
+                <p class="article-excerpt-listing">Descubra padrões comuns como "God Objects", ciclos de dependência e módulos órfãos que saltam aos olhos na visualização gráfica.</p>
+                <div class="article-meta-listing">
+                    <span><i class="far fa-calendar"></i> 15 Jan, 2026</span>
+                    <span class="read-time"><i class="far fa-clock"></i> 7 min</span>
                 </div>
-                
-                <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Ver exemplos visuais de cada problema →" data-less-text="Mostrar menos ↑">
-                    Ver exemplos visuais de cada problema →
-                </a>
             </article>
 
             <!-- Artigo 4 -->
-            <article class="article-card" id="planejando-refatoracao">
-                <h2><a href="javascript:void(0);" class="article-title-link">Planejando uma Grande Refatoração: Como o Mapa Define a Ordem das Tarefas</a></h2>
-                <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 12 de Janeiro, 2026 | <i class="far fa-folder"></i> Gestão & Estratégia</p>
-                
-                <p class="article-excerpt">Refatorar um sistema grande é assustador. Por onde começar? Qual mudança é segura? Um mapa de dependências transforma esse processo de um salto no escuro para uma jornada com mapa.</p>
-                
-                <div class="article-full-content">
-                    <p>Este artigo é um guia estratégico para <strong>priorizar e sequenciar</strong> tarefas de refatoração com base na análise do grafo.</p>
-                    
-                    <p>A estratégia principal é atacar as <em>folhas da árvore</em> primeiro: módulos que não são dependidos por ninguém, mas que dependem de outros. Refatorá-los tem risco quase zero de quebrar o sistema.</p>
-                    
-                    <h3>Estratégia de Refatoração Baseada em Risco</h3>
-                    <ol>
-                        <li><strong>Fase 1 - Folhas (Baixo Risco):</strong> Refatore módulos sem dependentes</li>
-                        <li><strong>Fase 2 - Ramos (Risco Médio):</strong> Trabalhe em módulos com poucos dependentes</li>
-                        <li><strong>Fase 3 - Troncos (Alto Risco):</strong> Aborde os hubs centrais</li>
-                        <li><strong>Fase 4 - Raízes (Risco Crítico):</strong> Por último, módulos dos quais muitos outros dependem</li>
-                    </ol>
-                    
-                    <p>Mostramos como usar a métrica de "dependências de entrada/saída" gerada pela ferramenta para calcular o <strong>risco e o impacto</strong> de cada mudança, permitindo criar um backlog de refatoração realista e eficaz para sua equipe.</p>
-                    
-                    <p><strong>Dica prática:</strong> Exporte o grafo como imagem e use-o em reuniões de planejamento para alinhar expectativas com stakeholders.</p>
+            <article class="article-card-listing">
+                <span class="article-category">Gestão & Estratégia</span>
+                <h2 class="article-title-listing">
+                    <a href="artigos/planejando-refatoracao-mapa-ordem.html">Planejando uma Grande Refatoração: Como o Mapa Define a Ordem das Tarefas</a>
+                </h2>
+                <p class="article-excerpt-listing">Estratégia para priorizar e sequenciar refatorações baseada em análise de risco e impacto usando métricas de dependência.</p>
+                <div class="article-meta-listing">
+                    <span><i class="far fa-calendar"></i> 12 Jan, 2026</span>
+                    <span class="read-time"><i class="far fa-clock"></i> 9 min</span>
                 </div>
-                
-                <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Ler o guia estratégico completo e baixar um template de planejamento →" data-less-text="Mostrar menos ↑">
-                    Ler o guia estratégico completo e baixar um template de planejamento →
-                </a>
             </article>
 
             <!-- Artigo 5 -->
-            <article class="article-card" id="ferramenta-vs-analise">
-                <h2><a href="javascript:void(0);" class="article-title-link">Ferramenta Visual vs. Análise Estática: Quando o Mapa Ganha da Lista?</a></h2>
-                <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 10 de Janeiro, 2026 | <i class="far fa-folder"></i> Ferramentas & Comparativos</p>
-                
-                <p class="article-excerpt">Ferramentas de análise estática (como ESLint, SonarQube) são excelentes para detectar problemas em nível de código, mas para problemas de arquitetura, uma visualização gráfica oferece vantagens únicas.</p>
-                
-                <div class="article-full-content">
-                    <p>Este artigo compara as abordagens e mostra quando cada uma é mais eficaz.</p>
-                    
-                    <p><strong>Vantagem do Mapa Visual (CodeCartographer):</strong></p>
-                    <ul>
-                        <li><strong>Compreensão Imediata:</strong> Padrões complexos são identificados em segundos pelo cérebro visual, contra minutos lendo listas.</li>
-                        <li><strong>Contexto Espacial:</strong> Você vê a "distância" e os caminhos entre módulos, essencial para planejar migrações.</li>
-                        <li><strong>Foco em Relações:</strong> A ferramenta filtra o ruído e mostra apenas o que importa: como as partes se conectam.</li>
-                        <li><strong>Comunicação Eficaz:</strong> É mais fácil explicar problemas arquiteturais com um diagrama do que com relatórios textuais.</li>
-                    </ul>
-                    
-                    <h3>Quando Usar Cada Abordagem</h3>
-                    <table style="width:100%; border-collapse: collapse; margin: 1rem 0;">
-                        <tr>
-                            <th style="text-align:left; padding:8px; border-bottom:1px solid #334155;">Cenário</th>
-                            <th style="text-align:left; padding:8px; border-bottom:1px solid #334155;">Melhor Ferramenta</th>
-                        </tr>
-                        <tr>
-                            <td style="padding:8px; border-bottom:1px solid #334155;">Encontrar code smells específicos</td>
-                            <td style="padding:8px; border-bottom:1px solid #334155;">Análise Estática</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:8px; border-bottom:1px solid #334155;">Entender a arquitetura geral</td>
-                            <td style="padding:8px; border-bottom:1px solid #334155;">Mapa Visual</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:8px; border-bottom:1px solid #334155;">Planejar uma grande refatoração</td>
-                            <td style="padding:8px; border-bottom:1px solid #334155;">Mapa Visual</td>
-                        </tr>
-                    </table>
-                    
-                    <p>Concluímos que as abordagens são <strong>complementares</strong>: use análise estática para qualidade do código interno, e o mapa visual para qualidade das conexões entre os códigos. Aprenda a integrar os dois fluxos no seu workflow para uma análise completa do projeto.</p>
+            <article class="article-card-listing">
+                <span class="article-category">Ferramentas & Comparativos</span>
+                <h2 class="article-title-listing">
+                    <a href="artigos/ferramenta-visual-vs-analise-estatica.html">Ferramenta Visual vs. Análise Estática: Quando o Mapa Ganha da Lista?</a>
+                </h2>
+                <p class="article-excerpt-listing">Comparativo das abordagens para análise de código e quando cada uma é mais eficaz para problemas de arquitetura versus code smells.</p>
+                <div class="article-meta-listing">
+                    <span><i class="far fa-calendar"></i> 10 Jan, 2026</span>
+                    <span class="read-time"><i class="far fa-clock"></i> 5 min</span>
                 </div>
-                
-                <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Ver a comparação detalhada com exemplos →" data-less-text="Mostrar menos ↑">
-                    Ver a comparação detalhada com exemplos →
-                </a>
             </article>
-            
-            <article class="article-card" id="caso-refatoracao-sucesso">
-    <h2><a href="javascript:void(0);" class="article-title-link">Caso Real: Como Reduzimos 40% da Dívida Técnica em 3 Meses Usando Análise Visual</a></h2>
-    <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 25 de Janeiro, 2026 | <i class="far fa-folder"></i> Caso de Estudo</p>
-    <p class="article-excerpt">Análise de um projeto open-source real onde a equipe identificou pontos críticos de acoplamento e estabeleceu um plano de refatoração baseado em evidências visuais.</p>
-    <div class="article-full-content">
-        <h3>O Problema Inicial</h3>
-        <p>Um projeto React com 2 anos de desenvolvimento apresentava lentidão nas builds e testes frágeis. A equipe suspeitava de acoplamento excessivo, mas não sabia por onde começar.</p>
-        <h3>A Estratégia de Análise</h3>
-        <p>1. <strong>Mapeamento Inicial:</strong> Geração do grafo completo com CodeCartographer revelou 3 "super-hubs" com mais de 50 dependências cada.<br>
-        2. <strong>Métricas Quantitativas:</strong> Cálculo do índice de acoplamento por módulo.<br>
-        3. <strong>Priorização:</strong> Foco nos módulos com maior impacto e menor risco.</p>
-        <h3>Resultados Mensuráveis</h3>
-        <ul>
-            <li>Build time reduzido de 4.5 para 2.7 minutos</li>
-            <li>Cobertura de testes aumentada de 65% para 82%</li>
-            <li>3 "god components" desmembrados em 12 componentes especializados</li>
-        </ul>
-    </div>
-    <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Ler estudo completo com métricas e gráficos →" data-less-text="Mostrar menos ↑">
-        Ler estudo completo com métricas e gráficos →
-    </a>
-</article>
 
-<article class="article-card" id="integracao-ci-cd">
-    <h2><a href="javascript:void(0);" class="article-title-link">Automatizando a Análise Arquitetural no seu CI/CD: Um Guia Passo a Passo</a></h2>
-    <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 23 de Janeiro, 2026 | <i class="far fa-folder"></i> DevOps & Automação</p>
-    <p class="article-excerpt">Aprenda a integrar a análise de dependências no seu pipeline de integração contínua para prevenir a degradação arquitetural automaticamente.</p>
-    <div class="article-full-content">
-        <h3>Configuração para GitHub Actions</h3>
-        <pre><code>name: Arquiteture Check
-on: [pull_request]
-jobs:
-  analyze-dependencies:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Analisar acoplamento
-        run: |
-          # Script que usa a API do CodeCartographer
-          # para gerar métricas e falhar se thresholds forem excedidos</code></pre>
-        <h3>Métricas para Monitorar</h3>
-        <ul>
-            <li><strong>Complexidade Ciclomática Arquitetural:</strong> Número de ciclos no grafo</li>
-            <li><strong>Índice de Estabilidade:</strong> Razão entre dependências de saída e entrada</li>
-            <li><strong>Acoplamento Absoluto:</strong> Número total de conexões por módulo</li>
-        </ul>
-        <p><strong>Gatilhos Recomendados:</strong> Falhar o PR se novos ciclos forem introduzidos ou se módulos críticos ultrapassarem limite de acoplamento.</p>
-    </div>
-    <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Ver exemplos completos de configuração →" data-less-text="Mostrar menos ↑">
-        Ver exemplos completos de configuração →
-    </a>
-</article>
+            <!-- Artigo 6 -->
+            <article class="article-card-listing">
+                <span class="article-category">Caso de Estudo</span>
+                <h2 class="article-title-listing">
+                    <a href="artigos/caso-refatoracao-40porcento-divida.html">Caso Real: Como Reduzimos 40% da Dívida Técnica em 3 Meses</a>
+                </h2>
+                <p class="article-excerpt-listing">Análise detalhada de um projeto open-source onde a equipe identificou pontos críticos de acoplamento e estabeleceu um plano de refatoração baseado em evidências visuais.</p>
+                <div class="article-meta-listing">
+                    <span><i class="far fa-calendar"></i> 25 Jan, 2026</span>
+                    <span class="read-time"><i class="far fa-clock"></i> 10 min</span>
+                </div>
+            </article>
 
-<article class="article-card" id="padroes-clean-architecture">
-    <h2><a href="javascript:void(0);" class="article-title-link">Como Identificar Violações de Clean Architecture Através do Mapa de Dependências</a></h2>
-    <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 28 de Janeiro, 2026 | <i class="far fa-folder"></i> Arquitetura & Padrões</p>
-    <p class="article-excerpt">Clean Architecture estabelece regras claras de direção das dependências. Veja como o mapa visual expõe quando essas regras são violadas.</p>
-    <div class="article-full-content">
-        <h3>As Camadas e Suas Direções Esperadas</h3>
-        <p>Na Clean Architecture, as dependências devem fluir:<br>
-        <strong>Entidades → Casos de Uso → Interfaces → Frameworks</strong><br>
-        Nunca o contrário.</p>
-        <h3>Padrões de Violação Comuns</h3>
-        <ol>
-            <li><strong>Dependência Inversa:</strong> Entidades importando adaptadores de UI</li>
-            <li><strong>Acoplamento a Frameworks:</strong> Casos de uso dependendo diretamente de Express, React, etc.</li>
-            <li><strong>Ignorando Boundaries:</strong> Importações cruzadas entre camadas</li>
-        </ol>
-        <h3>Como o CodeCartographer Ajuda</h3>
-        <p>Use a funcionalidade de <em>colorir por camada</em> para visualizar imediatamente violações. Setas que apontam na direção errada saltam aos olhos.</p>
-        <p><strong>Exercício Prático:</strong> Analise um repositório conhecido e conte as violações. Você se surpreenderá com os resultados.</p>
-    </div>
-    <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Aprender a configurar análise por camadas →" data-less-text="Mostrar menos ↑">
-        Aprender a configurar análise por camadas →
-    </a>
-</article>
+            <!-- Artigo 7 -->
+            <article class="article-card-listing">
+                <span class="article-category">DevOps & Automação</span>
+                <h2 class="article-title-listing">
+                    <a href="artigos/automatizando-analise-arquitetural-ci-cd.html">Automatizando a Análise Arquitetural no seu CI/CD</a>
+                </h2>
+                <p class="article-excerpt-listing">Guia passo a passo para integrar análise de dependências no pipeline de integração contínua e prevenir degradação arquitetural automaticamente.</p>
+                <div class="article-meta-listing">
+                    <span><i class="far fa-calendar"></i> 23 Jan, 2026</span>
+                    <span class="read-time"><i class="far fa-clock"></i> 12 min</span>
+                </div>
+            </article>
 
-<article class="article-card" id="iniciantes-metricas">
-    <h2><a href="javascript:void(0);" class="article-title-link">3 Métricas de Código que Todo Desenvolvedor Júnior Deveria Monitorar (e Como)</a></h2>
-    <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 30 de Janeiro, 2026 | <i class="far fa-folder"></i> Para Iniciantes</p>
-    <p class="article-excerpt">Antes de mergulhar em padrões complexos, comece monitorando estas 3 métricas simples que já revelam muito sobre a saúde do código.</p>
-    <div class="article-full-content">
-        <h3>1. Número de Importações por Arquivo</h3>
-        <p><strong>O que indica:</strong> Coesão. Arquivos com 20+ imports provavelmente fazem coisas demais.<br>
-        <strong>Threshold saudável:</strong> Menos de 10-12 imports para a maioria dos arquivos.</p>
-        <h3>2. Módulos sem Dependências Externas</h3>
-        <p><strong>O que indica:</strong> Potencial código morto ou utilidades bem isoladas.<br>
-        <strong>Ação:</strong> Verifique se módulos órfãos são realmente usados. Se sim, são candidatos a extração para bibliotecas separadas.</p>
-        <h3>3. Crescimento do Grafo ao Longo do Tempo</h3>
-        <p><strong>O que indica:</strong> Evolução da complexidade. Um grafo que cresce mais rápido que o código é alerta vermelho.<br>
-        <strong>Como medir:</strong> Compare snapshots semanais do seu mapa.</p>
-        <p><strong>Worksheet para Iniciantes:</strong> Baixe nossa planilha para acompanhar essas métricas no seu primeiro mês em um projeto legado.</p>
-    </div>
-    <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Baixar a planilha de acompanhamento gratuita →" data-less-text="Mostrar menos ↑">
-        Baixar a planilha de acompanhamento gratuita →
-    </a>
-</article>
+            <!-- Artigo 8 -->
+            <article class="article-card-listing">
+                <span class="article-category">Arquitetura & Padrões</span>
+                <h2 class="article-title-listing">
+                    <a href="artigos/violacoes-clean-architecture-mapa.html">Identificando Violações de Clean Architecture no Mapa de Dependências</a>
+                </h2>
+                <p class="article-excerpt-listing">Como o mapa visual expõe quando as regras de direção das dependências são violadas na Clean Architecture e outros padrões arquiteturais.</p>
+                <div class="article-meta-listing">
+                    <span><i class="far fa-calendar"></i> 28 Jan, 2026</span>
+                    <span class="read-time"><i class="far fa-clock"></i> 8 min</span>
+                </div>
+            </article>
 
-<article class="article-card" id="analise-evolucao-temporal">
-    <h2><a href="javascript:void(0);" class="article-title-link">Análise Temporal: Como a Arquitetura do seu Projeto Evolui (e Degrada) ao Longo do Tempo</a></h2>
-    <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 2 de Fevereiro, 2026 | <i class="far fa-folder"></i> Análise Avançada</p>
-    <p class="article-excerpt">A verdadeira dívida técnica não está no estado atual, mas na taxa de degradação. Aprenda a analisar a evolução arquitetural através de commits.</p>
-    <div class="article-full-content">
-        <h3>Metodologia de Análise Temporal</h3>
-        <p>1. <strong>Extrair snapshots:</strong> Gerar mapa de dependências para cada tag major do projeto.<br>
-        2. <strong>Calcular métricas por período:</strong> Acoplamento médio, complexidade ciclomática, número de ciclos.<br>
-        3. <strong>Identificar pontos de inflexão:</strong> Commits onde a degradação acelerou.</p>
-        <h3>Casos Reveladores</h3>
-        <ul>
-            <li><strong>"Feature creep":</strong> Módulo estável que repentinamente ganha dezenas de novas dependências</li>
-            <li><strong>Erosão de boundaries:</strong> Camadas que gradualmente começam a se comunicar diretamente</li>
-            <li><strong>Deterioração silenciosa:</strong> Aumento lento mas constante da complexidade</li>
-        </ul>
-        <h3>Ferramentas Complementares</h3>
-        <p>Combine CodeCartographer com <code>git log --stat</code> e ferramentas de visualização de rede de commits para uma visão completa da evolução do projeto.</p>
-    </div>
-    <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Ver estudo de caso com projeto de 5 anos →" data-less-text="Mostrar menos ↑">
-        Ver estudo de caso com projeto de 5 anos →
-    </a>
-</article>
+            <!-- Artigo 9 -->
+            <article class="article-card-listing">
+                <span class="article-category">Para Iniciantes</span>
+                <h2 class="article-title-listing">
+                    <a href="artigos/3-metricas-codigo-desenvolvedor-junior.html">3 Métricas de Código que Todo Desenvolvedor Júnior Deveria Monitorar</a>
+                </h2>
+                <p class="article-excerpt-listing">Métricas simples para iniciantes começarem a monitorar a saúde do código antes de mergulhar em padrões complexos de arquitetura.</p>
+                <div class="article-meta-listing">
+                    <span><i class="far fa-calendar"></i> 30 Jan, 2026</span>
+                    <span class="read-time"><i class="far fa-clock"></i> 6 min</span>
+                </div>
+            </article>
 
-<article class="article-card" id="comparativo-ferramentas-mercado">
-    <h2><a href="javascript:void(0);" class="article-title-link">CodeCartographer vs. Ferramentas Empresariais: O que Você Realmente Precisa?</a></h2>
-    <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 5 de Fevereiro, 2026 | <i class="far fa-folder"></i> Comparativos & Análise</p>
-    <p class="article-excerpt">SonarQube, NDepend, Structure101... As ferramentas empresariais custam milhares. Veja quando uma solução focada como a nossa é a escolha certa.</p>
-    <div class="article-full-content">
-        <table>
-            <tr><th>Necessidade</th><th>Ferramenta Empresarial</th><th>CodeCartographer</th></tr>
-            <tr><td>Análise de segurança profunda</td><td>✅ Ideal</td><td>❌ Não foco</td></tr>
-            <tr><td>Visualização arquitetural rápida</td><td>⏱️ Lento/config complexa</td><td>✅ Especialidade</td></tr>
-            <tr><td>Integração com múltiplas linguagens</td><td>✅ Amplo suporte</td><td>✅ JavaScript/TypeScript foco</td></tr>
-            <tr><td>Custo inicial</td><td>$5,000+</td><td>Grátis</td></tr>
-            <tr><td>Curva de aprendizado</td><td>2-4 semanas</td><td>10 minutos</td></tr>
-        </table>
-        <h3>Quando Escolher Cada Uma</h3>
-        <p><strong>Escolha ferramenta empresarial se:</strong> Você é uma grande empresa com compliance requirements, precisa de análise de segurança automatizada, ou tem um stack extremamente heterogêneo.</p>
-        <p><strong>Escolha CodeCartographer se:</strong> Você precisa de insights rápidos sobre arquitetura, está em projeto JavaScript/TypeScript, ou quer começar a análise sem burocracia.</p>
-        <p><strong>Estratégia híbrida:</strong> Use nossa ferramenta para descoberta e análise inicial, e ferramentas empresariais para monitoramento contínuo em produção.</p>
-    </div>
-    <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Ver tabela comparativa completa →" data-less-text="Mostrar menos ↑">
-        Ver tabela comparativa completa →
-    </a>
-</article>
+            <!-- Artigo 10 -->
+            <article class="article-card-listing">
+                <span class="article-category">Análise Avançada</span>
+                <h2 class="article-title-listing">
+                    <a href="artigos/analise-temporal-evolucao-arquitetura.html">Análise Temporal: Como a Arquitetura Evolui (e Degrada) ao Longo do Tempo</a>
+                </h2>
+                <p class="article-excerpt-listing">Métodos para analisar a evolução arquitetural através de commits e identificar pontos de inflexão onde a degradação acelerou.</p>
+                <div class="article-meta-listing">
+                    <span><i class="far fa-calendar"></i> 2 Fev, 2026</span>
+                    <span class="read-time"><i class="far fa-clock"></i> 11 min</span>
+                </div>
+            </article>
+        </div>
 
-<article class="article-card" id="workshop-time-1h">
-    <h2><a href="javascript:void(0);" class="article-title-link">Workshop de 1 Hora: Avalie a Saúde de Qualquer Repositório GitHub</a></h2>
-    <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 8 de Fevereiro, 2026 | <i class="far fa-folder"></i> Tutorial Prático</p>
-    <p class="article-excerpt">Siga este workshop passo a passo para, em 60 minutos, gerar um relatório completo sobre a saúde arquitetural de qualquer projeto open source.</p>
-    <div class="article-full-content">
-        <h3>Minuto 0-10: Configuração e Primeira Análise</h3>
-        <p>1. Escolha um repositório (sugestão: um framework que você usa)<br>
-        2. Cole a URL no CodeCartographer<br>
-        3. Gere o mapa completo<br>
-        4. Salve a imagem inicial</p>
-        
-        <h3>Minuto 10-30: Análise dos Padrões</h3>
-        <p>Responda:<br>
-        • <strong>Existem hubs óbvios?</strong> (módulos com +20 conexões)<br>
-        • <strong>Há ciclos?</strong> Use o detector automático<br>
-        • <strong>Qual a distribuição de acoplamento?</strong> Muitos módulos com 1-2 conexões ou distribuição uniforme?</p>
-        
-        <h3>Minuto 30-50: Investigação Profunda</h3>
-        <p>Escolha o módulo mais conectado e:<br>
-        1. Clique para ver suas dependências<br>
-        2. Analise se é um "coordinator" legítimo ou um "god object"<br>
-        3. Verifique sua evolução no histórico do GitHub</p>
-        
-        <h3>Minuto 50-60: Relatório e Insights</h3>
-        <p>Crie um relatório com:<br>
-        1. Pontos fortes da arquitetura<br>
-        2. 3 principais oportunidades de melhoria<br>
-        3. 1 recomendação prioritária</p>
-    </div>
-    <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Baixar template do workshop →" data-less-text="Mostrar menos ↑">
-        Baixar template do workshop →
-    </a>
-</article>
-
-<article class="article-card" id="opiniao-metricas-exageradas">
-    <h2><a href="javascript:void(0);" class="article-title-link">"Code Smells" Arquiteturais: Quando as Métricas Mentem Para Você</a></h2>
-    <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 12 de Fevereiro, 2026 | <i class="far fa-folder"></i> Opinião & Análise</p>
-    <p class="article-excerpt">Nem todo módulo altamente acoplado é um problema. Este artigo desafia dogmas e mostra quando violar "boas práticas" é a decisão correta.</p>
-    <div class="article-full-content">
-        <h3>Casos onde Alto Acoplamento é Aceitável (ou Desejável)</h3>
-        <ol>
-            <li><strong>Módulos de Infraestrutura Central:</strong> Um "event bus" ou "service locator" deve ser conhecido por todos</li>
-            <li><strong>Camadas de Compatibilidade:</strong> Adapters que conversam com muitos módulos durante migrações</li>
-            <li><strong>Kernels Minimalistas:</strong> O core de um framework intencionalmente acoplado a tudo</li>
-        </ol>
-        
-        <h3>O Perigo das Métricas Cegas</h3>
-        <p>Time que refatora módulos baseado apenas em métricas sem contexto:<br>
-        1. Gasta tempo "otimizando" código que raramente muda<br>
-        2. Introduz complexidade desnecessária com abstrações precoces<br>
-        3. Perde a coerência arquitetural em nome de números</p>
-        
-        <h3>Nossa Abordagem: Contexto sobre Dogma</h3>
-        <p>No CodeCartographer, incentivamos:<br>
-        1. <strong>Análise qualitativa:</strong> Por que este módulo é tão conectado?<br>
-        2. <strong>Histórico:</strong> Ele cresceu organicamente ou foi planejado assim?<br>
-        3. <strong>Impacto de mudança:</strong> Refatorar traz benefícios reais?</p>
-        
-        <p><strong>Controvérsia:</strong> Discordamos da visão de que "qualquer ciclo é ruim". Ciclos pequenos e estáveis entre módulos coesos são frequentemente inócuos.</p>
-    </div>
-    <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Ler a polêmica análise completa →" data-less-text="Mostrar menos ↑">
-        Ler a polêmica análise completa →
-    </a>
-</article>
-
-<article class="article-card" id="gestao-divida-tecnica">
-    <h2><a href="javascript:void(0);" class="article-title-link">Gestão de Dívida Técnica para Líderes: Das Métricas às Decisões de Negócio</a></h2>
-    <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 15 de Fevereiro, 2026 | <i class="far fa-folder"></i> Gestão & Liderança</p>
-    <p class="article-excerpt">Como traduzir complexidade ciclomática, acoplamento e coesão em argumentos que stakeholders não-técnicos entendem e aprovam.</p>
-    <div class="article-full-content">
-        <h3>As 3 Métricas que Importam para Negócio</h3>
-        <p>1. <strong>Tempo para Nova Feature:</strong> Correlação direta com acoplamento médio<br>
-        2. <strong>Custo de Manutenção:</strong> Complexidade = horas de desenvolvedor<br>
-        3. <strong>Risco de Incidente:</strong> Módulos críticos com alto acoplamento = pontos únicos de falha</p>
-        
-        <h3>Como Apresentar para a Diretoria</h3>
-        <p><strong>NÃO diga:</strong> "Temos 14 violações de DIP e 8 ciclos no grafo"<br>
-        <strong>DIGA:</strong> "40% do nosso tempo de desenvolvimento é gasto navegando dependências complexas. Otimizar isso reduziria time-to-market em 25%"</p>
-        
-        <h3>ROI da Refatoração: Um Modelo Simples</h3>
-        <pre>Custo da dívida = (horas navegando complexidade × custo hora) × risco bugs
-ROI refatoração = (redução horas × custo hora) - custo refatoração
-Período payback = custo refatoração / (redução horas mensal × custo hora)</pre>
-        
-        <p><strong>Template para Proposta:</strong> Baixe nosso template de apresentação para stakeholders com gráficos prontos baseados em dados do CodeCartographer.</p>
-    </div>
-    <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Baixar templates para gestores →" data-less-text="Mostrar menos ↑">
-        Baixar templates para gestores →
-    </a>
-</article>
-
-<article class="article-card" id="futuro-ia-analise-codigo">
-    <h2><a href="javascript:void(0);" class="article-title-link">O Futuro da Análise de Código: Como IA Vai Transformar Como Entendemos Arquitetura</a></h2>
-    <p class="article-meta"><i class="far fa-calendar"></i> Publicado em: 18 de Fevereiro, 2026 | <i class="far fa-folder"></i> Tendências & Futuro</p>
-    <p class="article-excerpt">De visualizações estáticas para assistentes de IA que preveem pontos de falha e sugerem refatorações. Para onde estamos indo?</p>
-    <div class="article-full-content">
-        <h3>Evolução em 3 Ondas</h3>
-        <p><strong>Onda 1 (Atual):</strong> Ferramentas visuais como CodeCartographer - mostram o estado atual<br>
-        <strong>Onda 2 (Emergente):</strong> Análise preditiva - "se adicionarmos este módulo aqui, qual o impacto?"<br>
-        <strong>Onda 3 (Futuro):</strong> Assistentes autônomos - "detectei um padrão de degradação, aqui estão 3 opções de refatoração com estimativas de esforço"</p>
-        
-        <h3>O Papel da IA Específica</h3>
-        <ul>
-            <li><strong>Reconhecimento de Padrões:</strong> Identificar "microservices inadvertidos" ou "monólitos disfarçados"</li>
-            <li><strong>Recomendação Contextual:</strong> Sugerir padrões de refatoração baseados no domínio do projeto</li>
-            <li><strong>Simulação de Impacto:</strong> Prever como mudanças arquiteturais afetam métricas de negócio</li>
-        </ul>
-        
-        <h3>Nosso Roadmap</h3>
-        <p>No CodeCartographer, estamos explorando:<br>
-        1. <strong>Análise de Sentimento do Código:</strong> Como a arquitetura "se sente" para novos desenvolvedores?<br>
-        2. <strong>Benchmarks Anônimos:</strong> Como seu projeto se compara a outros similares?<br>
-        3. <strong>Recomendações Baseadas em Dados:</strong> "Projetos no seu setor que reduziram acoplamento fizeram X, Y, Z"</p>
-        
-        <p><strong>Convite:</strong> Participe da nossa pesquisa sobre o futuro das ferramentas de análise de código.</p>
-    </div>
-    <a href="javascript:void(0);" class="read-more-toggle" data-more-text="Participar da pesquisa sobre futuro →" data-less-text="Mostrar menos ↑">
-        Participar da pesquisa sobre futuro →
-    </a>
-</article>
-            
-            
-            
-            
-            
-        </main>
-
-        <!-- Sidebar (Coluna Lateral) -->
-        <aside class="articles-sidebar">
-            <div class="sidebar-widget">
-                <h3><i class="fas fa-search"></i> Buscar Artigos</h3>
-                <input type="search" placeholder="Digite uma palavra-chave..." class="search-box" id="searchArticles">
-            </div>
-
-            <div class="sidebar-widget">
-                <h3><i class="fas fa-fire"></i> Artigos Populares</h3>
-                <ul>
-                    <li><a href="javascript:void(0);" onclick="scrollToArticle('5-problemas-arquitetura')">5 Problemas de Arquitetura que um Mapa Revela</a></li>
-                    <li><a href="javascript:void(0);" onclick="scrollToArticle('guia-dependencias-circulares')">Como Identificar Dependências Circulares</a></li>
-                    <li><a href="javascript:void(0);" onclick="scrollToArticle('ferramenta-vs-analise')">Ferramenta Visual vs. Análise Estática</a></li>
-                </ul>
-            </div>
-
-            <div class="sidebar-widget">
-                <h3><i class="fas fa-tags"></i> Categorias</h3>
-                <ul>
-                    <li><a href="javascript:void(0);" onclick="filterByCategory('tutorial')">Tutoriais Práticos</a></li>
-                    <li><a href="javascript:void(0);" onclick="filterByCategory('arquitetura')">Arquitetura & Conceitos</a></li>
-                    <li><a href="javascript:void(0);" onclick="filterByCategory('analise')">Análise & Diagnóstico</a></li>
-                    <li><a href="javascript:void(0);" onclick="filterByCategory('estrategia')">Gestão & Estratégia</a></li>
-                </ul>
-            </div>
-
-            <div class="sidebar-widget">
-                <h3><i class="fas fa-newspaper"></i> Inscreva-se</h3>
-                <p>Receba novos artigos por e-mail.</p>
-                <input type="email" placeholder="seu@email.com" class="email-input" id="subscribeEmail">
-                <button class="subscribe-btn" onclick="subscribeNewsletter()">Inscrever</button>
-            </div>
-        </aside>
+        <!-- Paginação (exemplo) -->
+        <div class="pagination">
+            <a href="#" class="current">1</a>
+            <a href="#">2</a>
+            <a href="#">3</a>
+        </div>
     </div>
 
     <!-- Rodapé -->
@@ -548,7 +340,7 @@ Período payback = custo refatoração / (redução horas mensal × custo hora)<
 
     <!-- Scripts -->
     <script>
-        // Scripts para tema, ano atual, etc.
+        // Tema claro/escuro
         document.getElementById('themeToggle').addEventListener('click', function() {
             document.body.classList.toggle('light-theme');
             const icon = this.querySelector('i');
@@ -561,9 +353,38 @@ Período payback = custo refatoração / (redução horas mensal × custo hora)<
             document.getElementById('themeToggle').querySelector('i').className = 'fas fa-sun';
         }
         
+        // Ano atual
         document.getElementById('currentYear').textContent = new Date().getFullYear();
         
-        // Função para limpar cache (mantida do original)
+        // Busca de artigos (simplificada)
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchBox = document.createElement('input');
+            searchBox.type = 'search';
+            searchBox.placeholder = 'Buscar artigos...';
+            searchBox.style.cssText = 'padding: 0.75rem; width: 100%; max-width: 400px; margin: 1rem auto 2rem; display: block;';
+            
+            const pageHeader = document.querySelector('.page-header');
+            pageHeader.parentNode.insertBefore(searchBox, pageHeader.nextSibling);
+            
+            searchBox.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const articles = document.querySelectorAll('.article-card-listing');
+                
+                articles.forEach(article => {
+                    const title = article.querySelector('.article-title-listing').textContent.toLowerCase();
+                    const excerpt = article.querySelector('.article-excerpt-listing').textContent.toLowerCase();
+                    const category = article.querySelector('.article-category').textContent.toLowerCase();
+                    
+                    if (title.includes(searchTerm) || excerpt.includes(searchTerm) || category.includes(searchTerm)) {
+                        article.style.display = 'block';
+                    } else {
+                        article.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Função para limpar cache
         function clearCache() {
             if (confirm('Tem certeza que deseja limpar todo o cache? Isso removerá todas as análises salvas.')) {
                 const keys = Object.keys(localStorage);
@@ -575,108 +396,6 @@ Período payback = custo refatoração / (redução horas mensal × custo hora)<
                 alert('Cache limpo com sucesso!');
             }
             return false;
-        }
-        
-        // Sistema de expandir/recolher artigos
-        document.addEventListener('DOMContentLoaded', function() {
-            const toggleButtons = document.querySelectorAll('.read-more-toggle');
-            
-            toggleButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const fullContent = this.closest('.article-card').querySelector('.article-full-content');
-                    const excerpt = this.closest('.article-card').querySelector('.article-excerpt');
-                    
-                    if (fullContent.style.display === 'none' || !fullContent.style.display) {
-                        fullContent.style.display = 'block';
-                        if(excerpt) excerpt.style.display = 'none';
-                        this.textContent = this.getAttribute('data-less-text');
-                    } else {
-                        fullContent.style.display = 'none';
-                        if(excerpt) excerpt.style.display = 'block';
-                        this.textContent = this.getAttribute('data-more-text');
-                    }
-                });
-            });
-            
-            // Busca de artigos
-            const searchInput = document.getElementById('searchArticles');
-            if(searchInput) {
-                searchInput.addEventListener('keyup', function(e) {
-                    if(e.key === 'Enter') {
-                        searchArticles(this.value);
-                    }
-                });
-            }
-        });
-        
-        // Função para rolar até um artigo específico
-        function scrollToArticle(articleId) {
-            const element = document.getElementById(articleId);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                // Destaque visual temporário
-                element.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-                element.style.transition = 'background-color 0.3s';
-                setTimeout(() => {
-                    element.style.backgroundColor = '';
-                }, 2000);
-                
-                // Expande o artigo automaticamente
-                const toggleBtn = element.querySelector('.read-more-toggle');
-                if (toggleBtn && toggleBtn.getAttribute('data-more-text')) {
-                    const fullContent = element.querySelector('.article-full-content');
-                    if (fullContent && (fullContent.style.display === 'none' || !fullContent.style.display)) {
-                        toggleBtn.click();
-                    }
-                }
-            }
-        }
-        
-        // Função para filtrar por categoria (simplificada)
-        function filterByCategory(category) {
-            alert('Funcionalidade de filtro em desenvolvimento! Em breve você poderá filtrar artigos por categoria.');
-            // Implementação futura: mostrar/ocultar artigos baseado na categoria
-        }
-        
-        // Função para busca de artigos
-        function searchArticles(query) {
-            if (!query.trim()) return;
-            
-            const articles = document.querySelectorAll('.article-card');
-            let found = false;
-            
-            articles.forEach(article => {
-                const text = article.textContent.toLowerCase();
-                if (text.includes(query.toLowerCase())) {
-                    article.style.display = 'block';
-                    found = true;
-                    // Rola até o primeiro resultado
-                    if (!found) {
-                        scrollToArticle(article.id);
-                    }
-                } else {
-                    article.style.display = 'none';
-                }
-            });
-            
-            if (!found) {
-                alert('Nenhum artigo encontrado para: ' + query);
-                // Mostra todos os artigos novamente
-                articles.forEach(article => {
-                    article.style.display = 'block';
-                });
-            }
-        }
-        
-        // Função para newsletter (simulada)
-        function subscribeNewsletter() {
-            const email = document.getElementById('subscribeEmail').value;
-            if (email && email.includes('@')) {
-                alert('Obrigado por se inscrever! Em breve você receberá nossas atualizações no email: ' + email);
-                document.getElementById('subscribeEmail').value = '';
-            } else {
-                alert('Por favor, insira um email válido.');
-            }
         }
     </script>
 </body>
