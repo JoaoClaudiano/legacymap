@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ESSAS TAGS SERÃO ÚNICAS PARA CADA ARTIGO (MODIFICAR) -->
+    <title>TÍTULO DO ARTIGO AQUI | CodeCartographer</title>
+    <meta name="description" content="DESCRIÇÃO ÚNICA DO ARTIGO PARA SEO AQUI">
+    
+    <!-- Open Graph para redes sociais -->
+    <meta property="og:title" content="TÍTULO DO ARTIGO AQUI">
+    <meta property="og:description" content="DESCRIÇÃO ÚNICA DO ARTIGO PARA SEO AQUI">
+    <meta property="og:image" content="URL_DA_IMAGEM_DESTAQUE_AQUI">
+    <meta property="og:url" content="URL_COMPLETA_DESTA_PÁGINA_AQUI">
+    <meta property="og:type" content="article">
+    
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="TÍTULO DO ARTIGO AQUI">
+    <meta name="twitter:description" content="DESCRIÇÃO ÚNICA DO ARTIGO PARA SEO AQUI">
+    
+    <!-- Schema.org markup para Google -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "TÍTULO DO ARTIGO AQUI",
+      "description": "DESCRIÇÃO ÚNICA DO ARTIGO PARA SEO AQUI",
+      "image": "URL_DA_IMAGEM_DESTAQUE_AQUI",
+      "author": {
+        "@type": "Person",
+        "name": "João Claudiano"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "CodeCartographer",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://joaoclaudiano.github.io/legacymap/favicon.ico"
+        }
+      },
+      "datePublished": "DATA_DE_PUBLICAÇÃO_AQUI",
+      "dateModified": "DATA_DE_MODIFICAÇÃO_AQUI"
+    }
+    </script>
+    
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Estilos específicos para página de artigo */
+        .article-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+        
+        .article-header {
+            margin-bottom: 3rem;
+        }
+        
+        .article-title {
+            font-size: 2.5rem;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: #f8fafc;
+        }
+        
+        .article-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            color: #94a3b8;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .article-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .article-content {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            color: #e2e8f0;
+        }
+        
+        .article-content h2 {
+            font-size: 1.75rem;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            color: #f1f5f9;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #3b82f6;
+        }
+        
+        .article-content h3 {
+            font-size: 1.5rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            color: #f1f5f9;
+        }
+        
+        .article-content p {
+            margin-bottom: 1.5rem;
+        }
+        
+        .article-content ul, .article-content ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+        
+        .article-content li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .article-content code {
+            background: #1e293b;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .article-content pre {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+        
+        .article-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 2rem 0;
+            border: 1px solid #334155;
+        }
+        
+        .article-cta {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 3rem 0;
+            text-align: center;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+            transition: background 0.2s;
+        }
+        
+        .cta-button:hover {
+            background: #2563eb;
+        }
+        
+        .article-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #334155;
+        }
+        
+        .nav-prev, .nav-next {
+            color: #94a3b8;
+            text-decoration: none;
+            max-width: 45%;
+        }
+        
+        .nav-prev:hover, .nav-next:hover {
+            color: #3b82f6;
+        }
+        
+        .nav-label {
+            display: block;
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .article-title {
+                font-size: 2rem;
+            }
+            
+            .article-meta {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .article-navigation {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            
+            .nav-prev, .nav-next {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cabeçalho consistente com o site -->
+    <header class="main-header">
+        <div class="logo">
+            <i class="fas fa-map"></i> 
+            <span style="color: #3b82f6;">CODE</span>CARTOGRAPHER
+        </div>
+        <nav class="main-nav">
+            <a href="../index.html" class="nav-link">
+                <i class="fas fa-home"></i> Início
+            </a>
+            <a href="../artigos.html" class="nav-link">
+                <i class="fas fa-newspaper"></i> Artigos
+            </a>
+        </nav>
+        <div class="header-controls">
+            <div class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo principal do artigo -->
+    <div class="article-container">
+        <article>
+            <header class="article-header">
+                <h1 class="article-title">TÍTULO DO ARTIGO AQUI</h1>
+                
+                <div class="article-meta">
+                    <span><i class="far fa-calendar"></i> Publicado em: <time datetime="2026-01-20">20 de Janeiro, 2026</time></span>
+                    <span><i class="far fa-folder"></i> Categoria: Tutorial Prático</span>
+                    <span><i class="far fa-clock"></i> Tempo de leitura: 8 minutos</span>
+                </div>
+            </header>
+
+            <div class="article-content">
+                <!-- CONTEÚDO COMPLETO DO ARTIGO VAI AQUI -->
+                <!-- Substitua todo este bloco pelo conteúdo do artigo -->
+                
+                <p>Este é um exemplo de como o conteúdo do artigo será estruturado. Aqui vai o primeiro parágrafo que introduz o tópico.</p>
+                
+                <h2>Primeira Seção do Artigo</h2>
+                <p>Mais detalhes sobre o tópico. Texto explicativo com exemplos.</p>
+                
+                <h3>Subseção Detalhada</h3>
+                <p>Informações mais específicas. Pode incluir listas:</p>
+                <ul>
+                    <li>Item de lista 1</li>
+                    <li>Item de lista 2</li>
+                    <li>Item de lista 3</li>
+                </ul>
+                
+                <p>Ou código de exemplo:</p>
+                <pre><code>// Exemplo de código JavaScript
+function exemplo() {
+    console.log("Código formatado corretamente");
+}</code></pre>
+                
+                <h2>Conclusão</h2>
+                <p>Resumo final e principais takeaways.</p>
+                <!-- FIM DO CONTEÚDO DO ARTIGO -->
+                
+                <!-- Call to Action -->
+                <div class="article-cta">
+                    <h3>🎯 Pronto para aplicar no seu projeto?</h3>
+                    <p>Use o CodeCartographer agora mesmo para analisar sua própria base de código e identificar problemas similares.</p>
+                    <a href="../index.html" class="cta-button">
+                        <i class="fas fa-play-circle"></i> Analisar Meu Código Grátis
+                    </a>
+                </div>
+            </div>
+
+            <!-- Navegação entre artigos -->
+            <footer class="article-navigation">
+                <a href="ARTIGO-ANTERIOR.html" class="nav-prev">
+                    <span class="nav-label">← Artigo anterior</span>
+                    <span>Título do artigo anterior aqui</span>
+                </a>
+                
+                <a href="ARTIGO-PRÓXIMO.html" class="nav-next">
+                    <span class="nav-label">Próximo artigo →</span>
+                    <span>Título do próximo artigo aqui</span>
+                </a>
+            </footer>
+        </article>
+    </div>
+
+    <!-- Rodapé consistente -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <span>Conectado à API do GitHub</span>
+                <span>•</span>
+                <a href="../guia.html"><i class="fas fa-book"></i> Como Usar</a>
+                <span>•</span>
+                <a href="../politica-de-privacidade.html"><i class="fas fa-shield-alt"></i> Privacidade</a>
+                <span>•</span>
+                <a href="../contato.html"><i class="fas fa-envelope"></i> Contato</a>
+                <span>•</span>
+                <a href="../artigos.html"><i class="fas fa-newspaper"></i> Artigos</a>
+                <span>•</span>
+                <span id="currentYear">2026</span>
+                <span>•</span>
+                <a href="#" onclick="clearCache()"><i class="fas fa-trash-alt"></i> Limpar Cache</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Tema claro/escuro
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            document.body.classList.toggle('light-theme');
+            const icon = this.querySelector('i');
+            icon.className = document.body.classList.contains('light-theme') ? 'fas fa-sun' : 'fas fa-moon';
+            localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+        });
+        
+        // Carregar tema salvo
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-theme');
+            document.getElementById('themeToggle').querySelector('i').className = 'fas fa-sun';
+        }
+        
+        // Ano atual
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        // Função para limpar cache (do seu original)
+        function clearCache() {
+            if (confirm('Tem certeza que deseja limpar todo o cache? Isso removerá todas as análises salvas.')) {
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith('codemap_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                alert('Cache limpo com sucesso!');
+            }
+            return false;
+        }
+        
+        // Destacar links de navegação quando hover
+        const navLinks = document.querySelectorAll('.nav-prev, .nav-next');
+        navLinks.forEach(link => {
+            link.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateX(5px)';
+            });
+            link.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateX(0)';
+            });
+        });
+    </script>
+</body>
+</html>
