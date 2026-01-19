@@ -48,20 +48,34 @@
 
     <div id="app"></div>
 
-    <footer class="main-footer">
-        <div class="footer-content">
-            <div class="cache-status" id="cacheStatus"></div>
-            <div class="footer-links">
-                <span>Conectado à API do GitHub</span>
-                <span>•</span>
-                <span id="currentYear">2024</span>
-                <span>•</span>
-                <a href="#" onclick="clearCache()" style="color: #94a3b8; text-decoration: none;">
-                    <i class="fas fa-trash-alt"></i> Limpar Cache
-                </a>
-            </div>
+<footer class="main-footer">
+    <div class="footer-content">
+        <div class="cache-status" id="cacheStatus"></div>
+        <div class="footer-links">
+            <span>Conectado à API do GitHub</span>
+            <span>•</span>
+            <!-- LINKS NOVOS ADICIONADOS AQUI -->
+            <a href="guia.html" style="color: #94a3b8; text-decoration: none;">
+                <i class="fas fa-book"></i> Como Usar
+            </a>
+            <span>•</span>
+            <a href="politica-de-privacidade.html" style="color: #94a3b8; text-decoration: none;">
+                <i class="fas fa-shield-alt"></i> Privacidade
+            </a>
+            <span>•</span>
+            <a href="contato.html" style="color: #94a3b8; text-decoration: none;">
+                <i class="fas fa-envelope"></i> Contato
+            </a>
+            <!-- FIM DOS LINKS NOVOS -->
+            <span>•</span>
+            <span id="currentYear">2026</span>
+            <span>•</span>
+            <a href="#" onclick="clearCache()" style="color: #94a3b8; text-decoration: none;">
+                <i class="fas fa-trash-alt"></i> Limpar Cache
+            </a>
         </div>
-    </footer>
+    </div>
+</footer>
 
     <!-- Nosso aplicativo React -->
     <script src="app.js"></script>
