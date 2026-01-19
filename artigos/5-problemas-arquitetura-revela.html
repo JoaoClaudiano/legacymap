@@ -47,6 +47,10 @@
         .severity-critical { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
         .severity-high { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
         .severity-medium { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+        html, body {
+        height: 100%;
+        overflow-y: auto; /* Garante que a rolagem vertical funcione */
+        }
         @media (max-width: 768px) { .article-title { font-size: 2rem; } .article-meta { flex-direction: column; gap: 0.75rem; } .article-navigation { flex-direction: column; gap: 1.5rem; } .nav-prev, .nav-next { max-width: 100%; } }
     </style>
 </head>
