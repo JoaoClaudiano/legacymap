@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Análise Temporal: Como a Arquitetura Evolui e Degrada ao Longo do Tempo | CodeCartographer</title>
+    <meta name="description" content="Métodos para analisar a evolução arquitetural através de commits e identificar pontos de inflexão onde a degradação acelerou.">
+    
+    <meta property="og:title" content="Análise Temporal: Como a Arquitetura Evolui e Degrada ao Longo do Tempo">
+    <meta property="og:description" content="Analise a evolução da arquitetura do seu projeto através do tempo.">
+    <meta property="og:image" content="https://joaoclaudiano.github.io/legacymap/images/artigos/analise-temporal.jpg">
+    <meta property="og:url" content="https://joaoclaudiano.github.io/legacymap/artigos/analise-temporal-evolucao-arquitetura.html">
+    <meta property="og:type" content="article">
+    
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            overflow-y: scroll;
+            margin: 0;
+            min-height: 100vh;
+        }
+        
+        .article-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            min-height: 100vh;
+        }
+        
+        .article-header {
+            margin-bottom: 3rem;
+        }
+        
+        .article-title {
+            font-size: 2.5rem;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: #f8fafc;
+        }
+        
+        .article-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            color: #94a3b8;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .article-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .article-content {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            color: #e2e8f0;
+            padding-bottom: 3rem;
+        }
+        
+        .article-content h2 {
+            font-size: 1.75rem;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            color: #f1f5f9;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #3b82f6;
+        }
+        
+        .article-content h3 {
+            font-size: 1.5rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            color: #f1f5f9;
+        }
+        
+        .article-content p {
+            margin-bottom: 1.5rem;
+        }
+        
+        .article-content ul, .article-content ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+        
+        .article-content li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .article-content code {
+            background: #1e293b;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .article-content pre {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+        
+        .copy-code-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.2s;
+        }
+        
+        .copy-code-btn:hover {
+            background: #2563eb;
+        }
+        
+        .copy-code-btn.copied {
+            background: #22c55e;
+        }
+        
+        .article-cta {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 3rem 0;
+            text-align: center;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+            transition: background 0.2s;
+        }
+        
+        .cta-button:hover {
+            background: #2563eb;
+        }
+        
+        .article-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #334155;
+        }
+        
+        .nav-prev, .nav-next {
+            color: #94a3b8;
+            text-decoration: none;
+            max-width: 45%;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .nav-prev:hover, .nav-next:hover {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .nav-label {
+            display: block;
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+        
+        .timeline-visual {
+            position: relative;
+            margin: 3rem 0;
+            height: 300px;
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .timeline-line {
+            position: absolute;
+            left: 50px;
+            right: 50px;
+            top: 150px;
+            height: 4px;
+            background: #334155;
+        }
+        
+        .timeline-point {
+            position: absolute;
+            top: 144px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+        
+        .timeline-point.critical {
+            background: #ef4444;
+            width: 16px;
+            height: 16px;
+            top: 142px;
+        }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .metric-cell {
+            background: #1e293b;
+            padding: 1rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #22c55e;
+        }
+        
+        .metric-value.negative {
+            color: #ef4444;
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+        
+        .case-study {
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .degradation-pattern {
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid #ef4444;
+        }
+        
+        @media (max-width: 768px) {
+            .article-title {
+                font-size: 2rem;
+            }
+            
+            .article-meta {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .article-navigation {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            
+            .nav-prev, .nav-next {
+                max-width: 100%;
+            }
+            
+            .article-container {
+                padding: 0 1rem;
+            }
+            
+            .metric-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .timeline-visual {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <div class="logo">
+            <i class="fas fa-map"></i> 
+            <span style="color: #3b82f6;">CODE</span>CARTOGRAPHER
+        </div>
+        <nav class="main-nav">
+            <a href="../index.html" class="nav-link"><i class="fas fa-home"></i> Início</a>
+            <a href="../artigos.html" class="nav-link"><i class="fas fa-newspaper"></i> Artigos</a>
+        </nav>
+        <div class="header-controls">
+            <div class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></div>
+        </div>
+    </header>
+
+    <div class="article-container">
+        <article>
+            <header class="article-header">
+                <h1 class="article-title">Análise Temporal: Como a Arquitetura do seu Projeto Evolui (e Degrada) ao Longo do Tempo</h1>
+                <div class="article-meta">
+                    <span><i class="far fa-calendar"></i> Publicado em: 2 de Fevereiro, 2026</span>
+                    <span><i class="far fa-folder"></i> Categoria: Análise Avançada</span>
+                    <span><i class="far fa-clock"></i> Tempo de leitura: 11 minutos</span>
+                </div>
+            </header>
+
+            <div class="article-content">
+                <p>A verdadeira dívida técnica não está apenas no estado atual do código, mas na <strong>taxa de degradação</strong> ao longo do tempo. Um sistema pode ter problemas hoje, mas se esses problemas não estão piorando rapidamente, você tem tempo para resolvê-los. O perigo real é quando a arquitetura se degrada exponencialmente, onde cada nova feature piora desproporcionalmente a situação.</p>
+                
+                <p>Este artigo ensina a técnica de <strong>análise temporal arquitetural</strong>: como usar snapshots históricos do seu código para entender padrões de evolução, identificar pontos de inflexão críticos, e prever problemas futuros antes que eles ocorram.</p>
+                
+                <h2>Metodologia de Análise Temporal em 3 Passos</h2>
+                
+                <div class="metric-grid">
+                    <div class="metric-cell">
+                        <div class="metric-value">1</div>
+                        <div class="metric-label">Extrair Snapshots</div>
+                    </div>
+                    
+                    <div class="metric-cell">
+                        <div class="metric-value">2</div>
+                        <div class="metric-label">Calcular Métricas</div>
+                    </div>
+                    
+                    <div class="metric-cell">
+                        <div class="metric-value">3</div>
+                        <div class="metric-label">Identificar Padrões</div>
+                    </div>
+                    
+                    <div class="metric-cell">
+                        <div class="metric-value">📈</div>
+                        <div class="metric-label">Prever Problemas</div>
+                    </div>
+                </div>
+                
+                <h3>Passo 1: Extrair Snapshots Históricos</h3>
+                
+                <p>Crie um script para gerar mapas de dependências em pontos-chave da história do projeto:</p>
+                
+                <pre><code>#!/bin/bash
+# scripts/generate-temporal-snapshots.sh
+
+# Pontos de amostragem: cada tag major e a cada 100 commits
+TAGS=$(git tag --sort=-v:refname | head -20)
+
+for TAG in $TAGS; do
+  echo "Analisando tag: $TAG"
+  git checkout $TAG
+  
+  # Gera análise com CodeCartographer
+  ccart analyze . --format=json > "snapshots/architecture-$TAG.json"
+  ccart analyze . --format=html > "snapshots/architecture-$TAG.html"
+  
+  # Extrai métricas básicas
+  echo "{
+    \"tag\": \"$TAG\",
+    \"date\": \"$(git show -s --format=%ci $TAG)\",
+    \"metrics\": $(ccart metrics . --format=json)
+  }" > "snapshots/metrics-$TAG.json"
+done
+
+# Volta para branch principal
+git checkout main</code></pre>
+                <button class="copy-code-btn" onclick="copyCode(this)">Copiar</button>
+                
+                <h3>Passo 2: Calcular Métricas por Período</h3>
+                
+                <p>Para cada snapshot, calcule métricas de evolução:</p>
+                
+                <pre><code>// Métricas temporais essenciais
+const temporalMetrics = {
+  // 1. Velocidade de degradação
+  degradationRate: (currentCoupling - previousCoupling) / daysBetween,
+  
+  // 2. Aceleração da complexidade
+  complexityAcceleration: (
+    (currentCoupling - previousCoupling) - 
+    (previousCoupling - olderCoupling)
+  ) / daysBetween,
+  
+  // 3. "Feature creep" index
+  featureCreepIndex: (
+    newDependencies / newLinesOfCode
+  ),
+  
+  // 4. Estabilidade relativa
+  relativeStability: (
+    stableModulesCount / totalModules
+  )
+};</code></pre>
+                <button class="copy-code-btn" onclick="copyCode(this)">Copiar</button>
+                
+                <h3>Passo 3: Identificar Pontos de Inflexão</h3>
+                
+                <p>Use técnicas estatísticas para encontrar momentos onde a degradação acelerou:</p>
+                
+                <div class="timeline-visual" id="timelineViz">
+                    <!-- Timeline será populada por JavaScript -->
+                </div>
+                
+                <h2>Casos Reveladores na Análise Temporal</h2>
+                
+                <div class="case-study">
+                    <h3>📈 Caso 1: "Feature Creep" em Módulo Estável</h3>
+                    <p><strong>Padrão:</strong> Módulo que permaneceu estável por meses, então repentinamente ganha dezenas de novas dependências em poucas semanas.</p>
+                    
+                    <pre><code>// UserService.java - Histórico de dependências
+Versão 1.0 (Jan): 8 imports  (estável por 4 meses)
+Versão 1.5 (Mai): 12 imports (+50%)
+Versão 2.0 (Jun): 28 imports (+133% em 1 mês!) ← PONTO DE INFLEXÃO
+Versão 2.5 (Jul): 35 imports (+25%)
+Versão 3.0 (Ago): 42 imports (+20%)</code></pre>
+                    <button class="copy-code-btn" onclick="copyCode(this)">Copiar</button>
+                    
+                    <p><strong>Causa comum:</strong> Pressão do negócio para entregar features rápido, resultando em "vamos só adicionar mais um método aqui".</p>
+                    <p><strong>Solução:</strong> Refatoração proativa quando crescimento > 20% por mês.</p>
+                </div>
+                
+                <div class="case-study">
+                    <h3>🔄 Caso 2: Erosão Gradual de Boundaries</h3>
+                    <p><strong>Padrão:</strong> Camadas arquiteturais que lentamente começam a se comunicar diretamente, ignorando as abstrações.</p>
+                    
+                    <div class="degradation-pattern">
+                        <p><strong>Degradação típica em Clean Architecture:</strong></p>
+                        <pre><code>Mês 1: UI → UseCase → Entity (✓ correto)
+Mês 3: UI → UseCase → Entity
+       UI → Repository (⚠️ violação leve)  
+Mês 6: UI → UseCase → Entity
+       UI → Repository
+       UseCase → Framework (❌ violação grave)
+Mês 9: UI → Entity (❌❌ colapso total)</code></pre>
+                        <button class="copy-code-btn" onclick="copyCode(this)">Copiar</button>
+                    </div>
+                    
+                    <p><strong>Detecção:</strong> Monitore o percentual de imports que cruzam boundaries. Alertar se > 5%.</p>
+                </div>
+                
+                <div class="case-study">
+                    <h3>🐌 Caso 3: Deterioração Silenciosa</h3>
+                    <p><strong>Padrão mais perigoso:</strong> Aumento lento mas constante da complexidade, quase imperceptível semana a semana, mas devastador em 6 meses.</p>
+                    
+                    <pre><code>// Projeto com deterioração silenciosa
+Semana 1: Acoplamento médio = 5.2
+Semana 2: 5.3 (+0.1) "Só um import a mais"
+Semana 3: 5.5 (+0.2) "Precisávamos entregar"
+Semana 4: 5.8 (+0.3) "É temporário"
+...
+Semana 26: 11.7 (+6.5 em 6 meses!) ← Sistema ingerenciável</code></pre>
+                    <button class="copy-code-btn" onclick="copyCode(this)">Copiar</button>
+                    
+                    <p><strong>Analogia:</strong> Como ferrugem em um navio - não parece problema hoje, mas afunda o navio em um ano.</p>
+                </div>
+                
+                <h2>Script de Monitoramento Temporal Automatizado</h2>
+                
+                <pre><code>#!/bin/bash
+# scripts/temporal-monitor.sh
+
+# Configuração
+PROJECT_PATH="/caminho/do/projeto"
+SNAPSHOT_DIR="./architecture-snapshots"
+THRESHOLDS_FILE="./thresholds.json"
+
+# Gera snapshot da semana
+TIMESTAMP=$(date +%Y-%m-%d)
+ccart analyze $PROJECT_PATH --format=json > "$SNAPSHOT_DIR/$TIMESTAMP.json"
+
+# Extrai métricas atuais
+CURRENT_METRICS=$(ccart metrics $PROJECT_PATH --format=json)
+
+# Carrega métricas da semana anterior
+if [ -f "$SNAPSHOT_DIR/last-week.json" ]; then
+  LAST_METRICS=$(cat "$SNAPSHOT_DIR/last-week.json")
+  
+  # Calcula diferenças
+  COUPLING_DIFF=$(echo "$CURRENT_METRICS" | jq '.averageCoupling' - \
+    "$LAST_METRICS" | jq '.averageCoupling')
+  
+  CYCLES_DIFF=$(echo "$CURRENT_METRICS" | jq '.circularDependencies' - \
+    "$LAST_METRICS" | jq '.circularDependencies')
+  
+  # Verifica thresholds
+  source $THRESHOLDS_FILE
+  
+  if (( $(echo "$COUPLING_DIFF > $MAX_COUPLING_INCREASE" | bc -l) )); then
+    send_alert "Acoplamento aumentou $COUPLING_DIFF (limite: $MAX_COUPLING_INCREASE)"
+  fi
+  
+  if [ $CYCLES_DIFF -gt $MAX_NEW_CYCLES ]; then
+    send_alert "Novos ciclos detectados: $CYCLES_DIFF"
+  fi
+fi
+
+# Atualiza referência
+cp "$SNAPSHOT_DIR/$TIMESTAMP.json" "$SNAPSHOT_DIR/last-week.json"
+
+# Gera relatório semanal
+generate_weekly_report() {
+  echo "# Relatório de Evolução Arquitetural"
+  echo "Data: $TIMESTAMP"
+  echo ""
+  echo "## Métricas Principais"
+  echo "- Acoplamento médio: $(echo $CURRENT_METRICS | jq '.averageCoupling')"
+  echo "- Ciclos de dependência: $(echo $CURRENT_METRICS | jq '.circularDependencies')"
+  echo "- Módulos instáveis: $(echo $CURRENT_METRICS | jq '.unstableModules')"
+  echo ""
+  echo "## Tendência"
+  if [ $COUPLING_DIFF -gt 0 ]; then
+    echo "⚠️ Acoplamento aumentando"
+  else
+    echo "✅ Acoplamento estável ou diminuindo"
+  fi
+}</code></pre>
+                <button class="copy-code-btn" onclick="copyCode(this)">Copiar</button>
+                
+                <h2>Dashboard de Evolução Arquitetural</h2>
+                
+                <p>Monitore estas métricas-chave em um dashboard:</p>
+                
+                <div class="metric-grid">
+                    <div class="metric-cell">
+                        <div class="metric-value" id="degradationRate">0.8</div>
+                        <div class="metric-label">Taxa degradação/semana</div>
+                    </div>
+                    
+                    <div class="metric-cell">
+                        <div class="metric-value negative" id="newCycles">+2</div>
+                        <div class="metric-label">Novos ciclos/mês</div>
+                    </div>
+                    
+                    <div class="metric-cell">
+                        <div class="metric-value">72%</div>
+                        <div class="metric-label">Módulos estáveis</div>
+                    </div>
+                    
+                    <div class="metric-cell">
+                        <div class="metric-value negative">3</div>
+                        <div class="metric-label">God objects novos</div>
+                    </div>
+                </div>
+                
+                <h2>Tomando Ação Baseada em Análise Temporal</h2>
+                
+                <h3>Nível 1: Degradação Leve (&lt; 5% por mês)</h3>
+                <p><strong>Ação:</strong> Monitoramento contínuo. Revisar em reuniões de arquitetura.</p>
+                
+                <h3>Nível 2: Degradação Moderada (5-15% por mês)</h3>
+                <p><strong>Ação:</strong> Planejar "sprints de dívida técnica". Alocar 20% do tempo para refatoração.</p>
+                
+                <h3>Nível 3: Degradação Severa (&gt; 15% por mês)</h3>
+                <p><strong>Ação:</strong> "Congelar" novas features. Sprint dedicado exclusivamente a refatoração. Revisar processos de desenvolvimento.</p>
+                
+                <h3>Nível 4: Colapso Iminente (&gt; 25% por mês)</h3>
+                <p><strong>Ação:</strong> Reescrita planejada de módulos críticos. Paralelizar desenvolvimento com nova arquitetura.</p>
+                
+                <h2>Ferramentas Complementares para Análise Temporal</h2>
+                
+                <ol>
+                    <li><strong>git log --stat:</strong> Para correlacionar commits com aumento de complexidade</li>
+                    <li><strong>CodeScene:</strong> Análise comportamental do código</li>
+                    <li><strong>Gitential:</strong> Métricas de produtividade e qualidade</li>
+                    <li><strong>Custom scripts:</strong> Combine CodeCartographer com suas próprias análises</li>
+                </ol>
+                
+                <div class="article-cta">
+                    <h3>⏳ Não Espere Ver o Colapso</h3>
+                    <p>A verdadeira dívida técnica é invisível até que seja tarde demais. Comece a monitorar a evolução da sua arquitetura hoje e previna problemas amanhã.</p>
+                    <a href="../index.html" class="cta-button">
+                        <i class="fas fa-history"></i> Analisar Evolução do Meu Projeto
+                    </a>
+                </div>
+            </div>
+
+            <footer class="article-navigation">
+                <a href="3-metricas-codigo-desenvolvedor-junior.html" class="nav-prev">
+                    <span class="nav-label">← Artigo anterior</span>
+                    <span>3 Métricas para Desenvolvedores Júnior</span>
+                </a>
+                <a href="../artigos.html" class="nav-next">
+                    <span class="nav-label">Ver todos os artigos →</span>
+                    <span>Biblioteca Completa de Artigos</span>
+                </a>
+            </footer>
+        </article>
+    </div>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <span>Conectado à API do GitHub</span><span>•</span>
+                <a href="../guia.html"><i class="fas fa-book"></i> Como Usar</a><span>•</span>
+                <a href="../politica-de-privacidade.html"><i class="fas fa-shield-alt"></i> Privacidade</a><span>•</span>
+                <a href="../contato.html"><i class="fas fa-envelope"></i> Contato</a><span>•</span>
+                <a href="../artigos.html"><i class="fas fa-newspaper"></i> Artigos</a><span>•</span>
+                <span id="currentYear">2026</span><span>•</span>
+                <a href="#" onclick="clearCache()"><i class="fas fa-trash-alt"></i> Limpar Cache</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Tema claro/escuro
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            document.body.classList.toggle('light-theme');
+            const icon = this.querySelector('i');
+            icon.className = document.body.classList.contains('light-theme') ? 'fas fa-sun' : 'fas fa-moon';
+            localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+        });
+        
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-theme');
+            document.getElementById('themeToggle').querySelector('i').className = 'fas fa-sun';
+        }
+        
+        // Ano atual
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        // Função para copiar código
+        function copyCode(button) {
+            const codeBlock = button.previousElementSibling;
+            const textToCopy = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                button.textContent = 'Copiado!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Erro ao copiar:', err);
+                button.textContent = 'Erro!';
+                
+                setTimeout(() => {
+                    button.textContent = 'Copiar';
+                }, 2000);
+            });
+        }
+        
+        // Função para limpar cache
+        function clearCache() {
+            if (confirm('Tem certeza que deseja limpar todo o cache? Isso removerá todas as análises salvas.')) {
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith('codemap_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                alert('Cache limpo com sucesso!');
+            }
+            return false;
+        }
+        
+        // Garantir scroll
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkScroll = () => {
+                const body = document.body;
+                const html = document.documentElement;
+                const height = Math.max(
+                    body.scrollHeight, 
+                    body.offsetHeight, 
+                    html.clientHeight, 
+                    html.scrollHeight, 
+                    html.offsetHeight
+                );
+                
+                if (height <= window.innerHeight) {
+                    document.querySelector('.article-container').style.paddingBottom = '100vh';
+                }
+            };
+            
+            checkScroll();
+            window.addEventListener('resize', checkScroll);
+            
+            // Criar timeline visual
+            createTimelineVisualization();
+        });
+        
+        // Criar visualização da timeline
+        function createTimelineVisualization() {
+            const timeline = document.getElementById('timelineViz');
+            if (!timeline) return;
+            
+            // Dados de exemplo
+            const timelineData = [
+                { month: 1, coupling: 5.2, critical: false },
+                { month: 2, coupling: 5.3, critical: false },
+                { month: 3, coupling: 5.8, critical: true },  // Ponto crítico
+                { month: 4, coupling: 6.5, critical: false },
+                { month: 5, coupling: 7.8, critical: true },  // Ponto crítico
+                { month: 6, coupling: 9.2, critical: false },
+                { month: 7, coupling: 11.7, critical: true }  // Ponto crítico
+            ];
+            
+            // Limpar conteúdo existente
+            timeline.innerHTML = '<div class="timeline-line"></div>';
+            
+            const timelineLine = timeline.querySelector('.timeline-line');
+            const lineWidth = timelineLine.offsetWidth;
+            
+            // Adicionar pontos
+            timelineData.forEach((point, index) => {
+                const pointElement = document.createElement('div');
+                pointElement.className = `timeline-point ${point.critical ? 'critical' : ''}`;
+                
+                // Posicionar horizontalmente
+                const position = (index / (timelineData.length - 1)) * lineWidth;
+                pointElement.style.left = `${position}px`;
+                
+                // Tooltip
+                pointElement.title = `Mês ${point.month}: Acoplamento = ${point.coupling}`;
+                
+                timeline.appendChild(pointElement);
+            });
+            
+            // Adicionar labels
+            const startLabel = document.createElement('div');
+            startLabel.textContent = 'Início';
+            startLabel.style.position = 'absolute';
+            startLabel.style.left = '20px';
+            startLabel.style.top = '160px';
+            startLabel.style.color = '#94a3b8';
+            timeline.appendChild(startLabel);
+            
+            const endLabel = document.createElement('div');
+            endLabel.textContent = 'Atual';
+            endLabel.style.position = 'absolute';
+            endLabel.style.right = '20px';
+            endLabel.style.top = '160px';
+            endLabel.style.color = '#94a3b8';
+            timeline.appendChild(endLabel);
+            
+            const criticalLabel = document.createElement('div');
+            criticalLabel.textContent = 'Pontos de Inflexão Críticos';
+            criticalLabel.style.position = 'absolute';
+            criticalLabel.style.left = '50%';
+            criticalLabel.style.transform = 'translateX(-50%)';
+            criticalLabel.style.top = '180px';
+            criticalLabel.style.color = '#ef4444';
+            criticalLabel.style.fontSize = '0.875rem';
+            timeline.appendChild(criticalLabel);
+        }
+    </script>
+</body>
+</html>
